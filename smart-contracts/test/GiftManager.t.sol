@@ -60,8 +60,9 @@ contract GiftManagerTest is Test {
 
     function testAddCharity() public {
         giftManager.addCharity(charity, keccak256("Mantle Aid"), keccak256("desc"));
-        (address addr,,,) = giftManager.charities(1);
+        (address addr,,) = giftManager.charities(1);
         assertEq(addr, charity);
+        assertTrue(giftManager.isActiveCharity(charity));
     }
 
     function testGetTopGifters() public {
@@ -74,7 +75,7 @@ contract GiftManagerTest is Test {
         vm.startPrank(user1);
         giftManager.sendGift(user2, 1 ether, keccak256("coffee"), keccak256("Enjoy!"), false);
         giftManager.sendGift(user3, 1 ether, keccak256("tea"), keccak256("Relax!"), false);
-        giftManager.sendGift(user2, 1 ether, keccak256("lunch"), keccak256("Bon appétit!"), false);
+        giftManager.sendGift(user2, 1 ether, keccak256("lunch"), keccak256("Bon appetit!"), false);
         vm.stopPrank();
 
         // user2 sends 1 gift
@@ -112,7 +113,7 @@ contract GiftManagerTest is Test {
         vm.prank(user1);
         giftManager.sendGift(charity, 1 ether, keccak256("donation"), keccak256("For a good cause"), true);
         
-        (,,,, bool isCharity,,) = giftManager.gifts(1);
+        (,,,,, bool isCharity,,) = giftManager.gifts(1);
         assertTrue(isCharity);
         assertEq(giftManager.charityDonationCount(user1), 1);
         
@@ -129,9 +130,10 @@ contract GiftManagerTest is Test {
 
     function testRemoveCharity() public {
         giftManager.addCharity(charity, keccak256("Mantle Aid"), keccak256("desc"));
+        assertTrue(giftManager.isActiveCharity(charity));
+        
         giftManager.removeCharity(1);
-        (,, bool active) = giftManager.charities(1);
-        assertFalse(active);
+        assertFalse(giftManager.isActiveCharity(charity));
     }
 
     function testFavorites() public {
@@ -226,5 +228,80 @@ contract GiftManagerTest is Test {
         vm.prank(user1);
         vm.expectRevert("Amount must be greater than 0");
         giftManager.sendGift(user2, 0, keccak256("coffee"), keccak256("Enjoy!"), false);
+    }
+
+    function testGetCharities() public {
+        // Add multiple charities
+        giftManager.addCharity(charity, keccak256("Mantle Aid"), keccak256("desc1"));
+        giftManager.addCharity(user2, keccak256("Crypto Charity"), keccak256("desc2"));
+        giftManager.addCharity(user1, keccak256("Tech Fund"), keccak256("desc3"));
+        
+        // Remove one charity
+        giftManager.removeCharity(2);
+        
+        (uint256[] memory ids, address[] memory addresses, bytes32[] memory names, bytes32[] memory descriptions) = giftManager.getCharities();
+        
+        // Should return 2 active charities (1 and 3, since 2 was removed)
+        assertEq(ids.length, 2);
+        assertEq(addresses[0], charity);
+        assertEq(names[0], keccak256("Mantle Aid"));
+        assertEq(addresses[1], user1);
+        assertEq(names[1], keccak256("Tech Fund"));
+    }
+
+    function testRecoverTokens() public {
+        // Send some tokens to the contract
+        mntToken.transfer(address(giftManager), 10 ether);
+        
+        uint256 ownerBalanceBefore = mntToken.balanceOf(owner);
+        
+        // Recover tokens as owner
+        giftManager.recoverTokens(address(mntToken), 5 ether);
+        
+        assertEq(mntToken.balanceOf(owner), ownerBalanceBefore + 5 ether);
+        assertEq(mntToken.balanceOf(address(giftManager)), 5 ether);
+    }
+
+    function test_RevertWhen_AddFavoriteInvalidAddress() public {
+        vm.prank(user1);
+        vm.expectRevert("Invalid recipient address");
+        giftManager.addFavorite(address(0), keccak256("Invalid"));
+    }
+
+    function test_RevertWhen_RemoveFavoriteInvalidId() public {
+        vm.prank(user1);
+        vm.expectRevert("Invalid favorite ID");
+        giftManager.removeFavorite(999);
+    }
+
+    function test_RevertWhen_RemoveCharityNotFound() public {
+        vm.expectRevert("Charity not found");
+        giftManager.removeCharity(999);
+    }
+
+    function test_RevertWhen_AddCharityInvalidAddress() public {
+        vm.expectRevert("Invalid charity address");
+        giftManager.addCharity(address(0), keccak256("Invalid"), keccak256("desc"));
+    }
+
+    function testTenGiftMilestone() public {
+        vm.startPrank(user1);
+        
+        // Send 10 gifts to trigger 10-gift milestone
+        for(uint i = 0; i < 10; i++) {
+            giftManager.sendGift(user2, 1 ether, keccak256("gift"), keccak256("msg"), false);
+        }
+        
+        // Should have 3 badges: 1st gift, 5th gift, 10th gift
+        assertEq(badgeNFT.ownerOf(1), user1); // 1st gift badge
+        assertEq(badgeNFT.tokenMilestone(1), 1);
+        
+        assertEq(badgeNFT.ownerOf(2), user1); // 5th gift badge  
+        assertEq(badgeNFT.tokenMilestone(2), 5);
+        
+        assertEq(badgeNFT.ownerOf(3), user1); // 10th gift badge
+        assertEq(badgeNFT.tokenMilestone(3), 10);
+        
+        vm.stopPrank();
     }
 }
