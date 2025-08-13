@@ -1,0 +1,12 @@
+{
+  "name": "nft-asset",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@pinata/sdk": "^2.1.0",
+    "dotenv": "^17.2.1",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
+  }
+}

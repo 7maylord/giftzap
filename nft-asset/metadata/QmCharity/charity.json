@@ -1,0 +1,9 @@
+{
+    "name": "Charity Star",
+    "description": "Awarded for donating to charity on GiftZap!",
+    "image": "https://gold-perfect-rook-553.mypinata.cloud/ipfs/bafybeig6dyxzdsqo5qnmatmxatt57fgwl7bglhdzi5xgaurxpklh3lowpa/4.png",
+    "external_url": "https://gold-perfect-rook-553.mypinata.cloud/ipfs/bafybeig6dyxzdsqo5qnmatmxatt57fgwl7bglhdzi5xgaurxpklh3lowpa/4.png",
+    "attributes": [
+      {"trait_type": "Type", "value": "Charity"}
+    ]
+  }

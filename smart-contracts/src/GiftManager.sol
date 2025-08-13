@@ -3,13 +3,10 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./BadgeNFT.sol";
 
 contract GiftManager is ReentrancyGuard, Ownable {
-    using SafeERC20 for IERC20;
-    
     IERC20 public immutable mntToken;
     BadgeNFT public immutable badgeNFT;
 
@@ -17,6 +14,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
         address charityAddress;
         bytes32 name;
         bytes32 descriptionHash;
+        bool active;
     }
 
     struct Favorite {
@@ -45,7 +43,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
     uint256 public giftCounter;
     mapping(address => uint256) public giftSentCount;
     mapping(address => uint256) public charityDonationCount;
-    mapping(address => bool) public isActiveCharity; // O(1) charity lookup
+    mapping(address => bool) public isActiveCharity; 
 
     event GiftSent(uint256 indexed giftId, address indexed sender, address indexed recipient, uint256 amount, bytes32 giftTypeHash, bytes32 messageHash, bool isCharity);
     event GiftRedeemed(uint256 indexed giftId, address indexed recipient);
@@ -64,13 +62,14 @@ contract GiftManager is ReentrancyGuard, Ownable {
     function addCharity(address charityAddress, bytes32 name, bytes32 descriptionHash) external onlyOwner {
         require(charityAddress != address(0), "Invalid charity address");
         charityCounter++;
-        charities[charityCounter] = Charity(charityAddress, name, descriptionHash);
+        charities[charityCounter] = Charity(charityAddress, name, descriptionHash, true);
         isActiveCharity[charityAddress] = true;
         emit CharityAdded(charityCounter, charityAddress, name, descriptionHash);
     }
 
     function removeCharity(uint256 charityId) external onlyOwner {
-        require(charities[charityId].charityAddress != address(0), "Charity not found");
+        require(charities[charityId].active, "Charity not found");
+        charities[charityId].active = false;
         isActiveCharity[charities[charityId].charityAddress] = false;
         emit CharityRemoved(charityId);
     }
@@ -108,14 +107,12 @@ contract GiftManager is ReentrancyGuard, Ownable {
         require(recipient != address(0), "Invalid recipient address");
         require(amount > 0, "Amount must be greater than 0");
         
-        // Optimized: O(1) charity validation instead of O(n) loop
         if (isCharity) {
             require(isActiveCharity[recipient], "Not a valid charity");
         }
         
-        mntToken.safeTransferFrom(msg.sender, address(this), amount);
+        require(mntToken.transferFrom(msg.sender, address(this), amount), "MNT transfer failed");
 
-        // Cache sender for gas optimization
         address sender = msg.sender;
         
         giftCounter++;
@@ -123,14 +120,14 @@ contract GiftManager is ReentrancyGuard, Ownable {
 
         giftSentCount[sender]++;
         
-        // Optimized: Only update favorites if sender has any
+        // Only update favorites if sender has any
         uint256 senderFavoriteCount = favoriteCount[sender];
         if (senderFavoriteCount > 0) {
             for (uint256 i = 1; i <= senderFavoriteCount; i++) {
                 if (favorites[sender][i].recipient == recipient) {
                     favorites[sender][i].giftCount++;
                     favorites[sender][i].totalAmount += amount;
-                    break; // Exit early once found
+                    break; 
                 }
             }
         }
@@ -157,7 +154,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
         require(gift.amount > 0, "Invalid gift");
 
         gift.redeemed = true;
-        mntToken.safeTransfer(msg.sender, gift.amount);
+        require(mntToken.transfer(msg.sender, gift.amount), "MNT transfer failed");
 
         emit GiftRedeemed(giftId, msg.sender);
     }
@@ -214,7 +211,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
     function getCharities() external view returns (uint256[] memory ids, address[] memory addresses, bytes32[] memory names, bytes32[] memory descriptionHashes) {
         uint256 activeCount = 0;
         for (uint256 i = 1; i <= charityCounter; i++) {
-            if (isActiveCharity[charities[i].charityAddress]) activeCount++;
+            if (charities[i].active) activeCount++;
         }
         ids = new uint256[](activeCount);
         addresses = new address[](activeCount);
@@ -222,7 +219,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
         descriptionHashes = new bytes32[](activeCount);
         uint256 index = 0;
         for (uint256 i = 1; i <= charityCounter; i++) {
-            if (isActiveCharity[charities[i].charityAddress]) {
+            if (charities[i].active) {
                 ids[index] = i;
                 addresses[index] = charities[i].charityAddress;
                 names[index] = charities[i].name;
@@ -233,6 +230,6 @@ contract GiftManager is ReentrancyGuard, Ownable {
     }
 
     function recoverTokens(address token, uint256 amount) external onlyOwner {
-        IERC20(token).safeTransfer(owner(), amount);
+        IERC20(token).transfer(owner(), amount);
     }
 }
