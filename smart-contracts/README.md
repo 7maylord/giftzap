@@ -48,8 +48,17 @@ $ anvil
 ### Deploy
 
 ```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+$ forge script script/Deploy.s.sol --rpc-url mantle_sepolia --broadcast --verify
 ```
+
+## Deployed Contracts (Mantle Sepolia Testnet)
+
+- **MockMNT Token**: `0x23B3C1D91d1cA80fA157A65fF3B9e7BfD3E79C35`
+- **BadgeNFT**: `0x5A9354cDF593ca32E057207Ceb4AEa161208814B` (Verified)
+- **GiftManager**: `0xcA3f02A32C333e4fc00E3Bd91C648e7deAb5d9eB` (Verified)
+
+Network: Mantle Sepolia (Chain ID: 5003)
+Explorer: https://explorer.sepolia.mantle.xyz/
 
 ### Cast
 

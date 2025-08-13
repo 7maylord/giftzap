@@ -43,9 +43,17 @@ contract GiftManager is ReentrancyGuard, Ownable {
     uint256 public giftCounter;
     mapping(address => uint256) public giftSentCount;
     mapping(address => uint256) public charityDonationCount;
-    mapping(address => bool) public isActiveCharity; 
+    mapping(address => bool) public isActiveCharity;
 
-    event GiftSent(uint256 indexed giftId, address indexed sender, address indexed recipient, uint256 amount, bytes32 giftTypeHash, bytes32 messageHash, bool isCharity);
+    event GiftSent(
+        uint256 indexed giftId,
+        address indexed sender,
+        address indexed recipient,
+        uint256 amount,
+        bytes32 giftTypeHash,
+        bytes32 messageHash,
+        bool isCharity
+    );
     event GiftRedeemed(uint256 indexed giftId, address indexed recipient);
     event BadgeEarned(address indexed user, uint256 milestone);
     event CharityBadgeEarned(address indexed user);
@@ -87,7 +95,16 @@ contract GiftManager is ReentrancyGuard, Ownable {
         delete favorites[msg.sender][favoriteId];
     }
 
-    function getFavorites(address user) external view returns (address[] memory recipients, bytes32[] memory names, uint256[] memory giftCounts, uint256[] memory totalAmounts) {
+    function getFavorites(address user)
+        external
+        view
+        returns (
+            address[] memory recipients,
+            bytes32[] memory names,
+            uint256[] memory giftCounts,
+            uint256[] memory totalAmounts
+        )
+    {
         uint256 count = favoriteCount[user];
         recipients = new address[](count);
         names = new bytes32[](count);
@@ -95,31 +112,35 @@ contract GiftManager is ReentrancyGuard, Ownable {
         totalAmounts = new uint256[](count);
         for (uint256 i = 1; i <= count; i++) {
             if (favorites[user][i].recipient != address(0)) {
-                recipients[i-1] = favorites[user][i].recipient;
-                names[i-1] = favorites[user][i].name;
-                giftCounts[i-1] = favorites[user][i].giftCount;
-                totalAmounts[i-1] = favorites[user][i].totalAmount;
+                recipients[i - 1] = favorites[user][i].recipient;
+                names[i - 1] = favorites[user][i].name;
+                giftCounts[i - 1] = favorites[user][i].giftCount;
+                totalAmounts[i - 1] = favorites[user][i].totalAmount;
             }
         }
     }
 
-    function sendGift(address recipient, uint256 amount, bytes32 giftTypeHash, bytes32 messageHash, bool isCharity) external nonReentrant {
+    function sendGift(address recipient, uint256 amount, bytes32 giftTypeHash, bytes32 messageHash, bool isCharity)
+        external
+        nonReentrant
+    {
         require(recipient != address(0), "Invalid recipient address");
         require(amount > 0, "Amount must be greater than 0");
-        
+
         if (isCharity) {
             require(isActiveCharity[recipient], "Not a valid charity");
         }
-        
+
         require(mntToken.transferFrom(msg.sender, address(this), amount), "MNT transfer failed");
 
         address sender = msg.sender;
-        
+
         giftCounter++;
-        gifts[giftCounter] = Gift(sender, recipient, amount, giftTypeHash, messageHash, isCharity, false, block.timestamp);
+        gifts[giftCounter] =
+            Gift(sender, recipient, amount, giftTypeHash, messageHash, isCharity, false, block.timestamp);
 
         giftSentCount[sender]++;
-        
+
         // Only update favorites if sender has any
         uint256 senderFavoriteCount = favoriteCount[sender];
         if (senderFavoriteCount > 0) {
@@ -127,17 +148,17 @@ contract GiftManager is ReentrancyGuard, Ownable {
                 if (favorites[sender][i].recipient == recipient) {
                     favorites[sender][i].giftCount++;
                     favorites[sender][i].totalAmount += amount;
-                    break; 
+                    break;
                 }
             }
         }
-        
+
         if (isCharity) {
             charityDonationCount[sender]++;
             badgeNFT.mintCharityBadge(sender);
             emit CharityBadgeEarned(sender);
         }
-        
+
         uint256 currentGiftCount = giftSentCount[sender];
         if (currentGiftCount == 1 || currentGiftCount == 5 || currentGiftCount == 10) {
             badgeNFT.mintBadge(sender, currentGiftCount);
@@ -162,15 +183,15 @@ contract GiftManager is ReentrancyGuard, Ownable {
     function getTopGifters() external view returns (address[] memory addresses, uint256[] memory counts) {
         addresses = new address[](3);
         counts = new uint256[](3);
-        
+
         // Collect unique senders efficiently
         address[] memory uniqueSenders = new address[](giftCounter);
         uint256 uniqueCount = 0;
-        
+
         for (uint256 i = 1; i <= giftCounter; i++) {
             address sender = gifts[i].sender;
             bool isUnique = true;
-            
+
             // Check if sender already exists in uniqueSenders
             for (uint256 j = 0; j < uniqueCount; j++) {
                 if (uniqueSenders[j] == sender) {
@@ -178,19 +199,19 @@ contract GiftManager is ReentrancyGuard, Ownable {
                     break;
                 }
             }
-            
+
             if (isUnique) {
                 uniqueSenders[uniqueCount] = sender;
                 uniqueCount++;
             }
         }
-        
+
         // Find top 3 from unique senders
         for (uint256 i = 0; i < uniqueCount && i < 3; i++) {
             uint256 maxCount = 0;
             address maxSender;
             uint256 maxIndex;
-            
+
             for (uint256 j = 0; j < uniqueCount; j++) {
                 if (giftSentCount[uniqueSenders[j]] > maxCount) {
                     maxCount = giftSentCount[uniqueSenders[j]];
@@ -198,7 +219,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
                     maxIndex = j;
                 }
             }
-            
+
             if (maxCount > 0) {
                 addresses[i] = maxSender;
                 counts[i] = maxCount;
@@ -208,7 +229,16 @@ contract GiftManager is ReentrancyGuard, Ownable {
         }
     }
 
-    function getCharities() external view returns (uint256[] memory ids, address[] memory addresses, bytes32[] memory names, bytes32[] memory descriptionHashes) {
+    function getCharities()
+        external
+        view
+        returns (
+            uint256[] memory ids,
+            address[] memory addresses,
+            bytes32[] memory names,
+            bytes32[] memory descriptionHashes
+        )
+    {
         uint256 activeCount = 0;
         for (uint256 i = 1; i <= charityCounter; i++) {
             if (charities[i].active) activeCount++;
