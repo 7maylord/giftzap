@@ -5,7 +5,7 @@ import { useGetCharities } from '@/hooks/useGiftManager'
 export default function CharityList() {
   const { data, isLoading, error } = useGetCharities()
 
-  const charities = data ? {
+  const charities = data && Array.isArray(data) ? {
     ids: data[0] as bigint[],
     addresses: data[1] as string[],
     names: data[2] as string[],
@@ -15,7 +15,7 @@ export default function CharityList() {
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         <p className="mt-2 text-gray-600">Loading charities...</p>
       </div>
     )

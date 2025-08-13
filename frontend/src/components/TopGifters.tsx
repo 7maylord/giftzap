@@ -13,7 +13,7 @@ export default function TopGifters() {
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         <p className="mt-2 text-gray-600">Loading leaderboard...</p>
       </div>
     )
@@ -68,7 +68,7 @@ export default function TopGifters() {
               </div>
               
               <div className="text-right">
-                <p className="text-2xl font-bold text-indigo-600">
+                <p className="text-2xl font-bold text-primary">
                   {gifter.count}
                 </p>
               </div>

@@ -2,18 +2,19 @@
 
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
-import { parseEther, formatEther, encodePacked, keccak256, toHex } from 'viem'
+import { parseEther, formatEther, keccak256, toHex, isAddress } from 'viem'
 import { useGiftManagerWrite } from '@/hooks/useGiftManager'
 import { useMockMNTWrite, useTokenBalance, useTokenAllowance } from '@/hooks/useMockMNT'
 import { useGetCharities } from '@/hooks/useGiftManager'
 import { CONTRACTS } from '@/lib/config'
+import { toast } from 'react-toastify'
 
 export default function SendGiftForm() {
   const { address } = useAccount()
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [message, setMessage] = useState('')
-  const [giftType, setGiftType] = useState('birthday')
+  const [giftType, setGiftType] = useState('')
   const [isCharity, setIsCharity] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -34,26 +35,75 @@ export default function SendGiftForm() {
   const needsApproval = allowance !== undefined && parseEther(amount || '0') > allowance
 
   const handleApprove = async () => {
-    if (!amount) return
+    if (!amount) {
+      toast.error('Please enter an amount')
+      return
+    }
+    
+    if (parseFloat(amount) <= 0) {
+      toast.error('Amount must be greater than 0')
+      return
+    }
+
     setIsLoading(true)
     try {
+      toast.info('Approval transaction submitted. Please confirm in your wallet.')
+      
       await writeMNT({
         address: CONTRACTS.MOCK_MNT,
         abi: (await import('@/abi/MockMNT.json')).default,
         functionName: 'approve',
         args: [CONTRACTS.GIFT_MANAGER, parseEther(amount)]
       })
-    } catch (error) {
+      
+      toast.success('Token approval successful!')
+    } catch (error: unknown) {
       console.error('Approval failed:', error)
+      const err = error as { shortMessage?: string; message?: string }
+      const errorMessage = err?.shortMessage || err?.message || 'Approval failed'
+      toast.error(errorMessage)
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   const handleSendGift = async () => {
-    if (!recipient || !amount) return
+    // Validation
+    if (!recipient) {
+      toast.error('Please enter a recipient address')
+      return
+    }
+    
+    if (!isCharity && !isAddress(recipient)) {
+      toast.error('Please enter a valid recipient address')
+      return
+    }
+    
+    if (!amount) {
+      toast.error('Please enter an amount')
+      return
+    }
+    
+    if (parseFloat(amount) <= 0) {
+      toast.error('Amount must be greater than 0')
+      return
+    }
+    
+    if (!giftType) {
+      toast.error('Please select a gift type')
+      return
+    }
+    
+    if (balance && parseEther(amount) > balance) {
+      toast.error('Insufficient balance')
+      return
+    }
+
     setIsLoading(true)
     
     try {
+      toast.info('Gift transaction submitted. Please confirm in your wallet.')
+      
       const giftTypeHash = keccak256(toHex(giftType))
       const messageHash = keccak256(toHex(message))
       
@@ -64,29 +114,50 @@ export default function SendGiftForm() {
         args: [recipient, parseEther(amount), giftTypeHash, messageHash, isCharity]
       })
       
+      toast.success('🎁 Gift sent successfully!')
+      
+      // Reset form
       setRecipient('')
       setAmount('')
       setMessage('')
-    } catch (error) {
+      setGiftType('')
+      setIsCharity(false)
+    } catch (error: unknown) {
       console.error('Gift sending failed:', error)
+      const err = error as { shortMessage?: string; message?: string }
+      const errorMessage = err?.shortMessage || err?.message || 'Failed to send gift'
+      toast.error(errorMessage)
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   const handleMintTokens = async () => {
-    if (!address) return
+    if (!address) {
+      toast.error('Please connect your wallet')
+      return
+    }
+    
     setIsLoading(true)
     try {
+      toast.info('Minting tokens. Please confirm in your wallet.')
+      
       await writeMNT({
         address: CONTRACTS.MOCK_MNT,
         abi: (await import('@/abi/MockMNT.json')).default,
         functionName: 'mint',
         args: [address, parseEther('1000')]
       })
-    } catch (error) {
+      
+      toast.success('Successfully minted 1000 MNT tokens!')
+    } catch (error: unknown) {
       console.error('Minting failed:', error)
+      const err = error as { shortMessage?: string; message?: string }
+      const errorMessage = err?.shortMessage || err?.message || 'Minting failed'
+      toast.error(errorMessage)
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }
 
   return (
@@ -127,7 +198,7 @@ export default function SendGiftForm() {
             <select
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">Select a charity</option>
               {charities.addresses.map((address, index) => (
@@ -147,7 +218,7 @@ export default function SendGiftForm() {
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder="0x..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
         )}
@@ -162,7 +233,7 @@ export default function SendGiftForm() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
@@ -173,13 +244,43 @@ export default function SendGiftForm() {
           <select
             value={giftType}
             onChange={(e) => setGiftType(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white"
           >
-            <option value="birthday">Birthday</option>
-            <option value="anniversary">Anniversary</option>
-            <option value="congratulations">Congratulations</option>
-            <option value="thank_you">Thank You</option>
-            <option value="just_because">Just Because</option>
+            <option value="">Select gift type</option>
+            <optgroup label="🎉 Celebrations">
+              <option value="birthday">🎂 Birthday</option>
+              <option value="anniversary">💍 Anniversary</option>
+              <option value="graduation">🎓 Graduation</option>
+              <option value="wedding">👰 Wedding</option>
+              <option value="baby_shower">🍼 Baby Shower</option>
+              <option value="new_year">🎊 New Year</option>
+              <option value="valentine">💝 Valentine&apos;s Day</option>
+              <option value="christmas">🎄 Christmas</option>
+            </optgroup>
+            <optgroup label="🏆 Achievements">
+              <option value="congratulations">🎉 Congratulations</option>
+              <option value="promotion">📈 Promotion</option>
+              <option value="new_job">💼 New Job</option>
+              <option value="success">🌟 Success</option>
+              <option value="achievement">🏅 Achievement</option>
+            </optgroup>
+            <optgroup label="❤️ Appreciation">
+              <option value="thank_you">🙏 Thank You</option>
+              <option value="appreciation">💖 Appreciation</option>
+              <option value="friendship">👫 Friendship</option>
+              <option value="love">💕 Love</option>
+              <option value="support">🤝 Support</option>
+            </optgroup>
+            <optgroup label="🌟 Other">
+              <option value="just_because">✨ Just Because</option>
+              <option value="good_luck">🍀 Good Luck</option>
+              <option value="get_well">💊 Get Well Soon</option>
+              <option value="apology">😔 Apology</option>
+              <option value="encouragement">💪 Encouragement</option>
+              <option value="sympathy">🤗 Sympathy</option>
+              <option value="welcome">🏠 Welcome</option>
+              <option value="farewell">👋 Farewell</option>
+            </optgroup>
           </select>
         </div>
 
@@ -192,7 +293,7 @@ export default function SendGiftForm() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Add a personal message..."
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
@@ -209,8 +310,8 @@ export default function SendGiftForm() {
           
           <button
             onClick={handleSendGift}
-            disabled={isLoading || !recipient || !amount || needsApproval}
-            className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-bold py-3 px-6 rounded-lg"
+            disabled={isLoading || !recipient || !amount || !giftType || needsApproval}
+            className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-gray-300 text-primary-foreground font-bold py-3 px-6 rounded-lg"
           >
             {isLoading ? 'Sending...' : 'Send Gift 🎁'}
           </button>

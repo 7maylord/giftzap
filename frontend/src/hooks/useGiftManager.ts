@@ -2,7 +2,7 @@ import { useReadContract, useWriteContract, useWatchContractEvent } from 'wagmi'
 import { CONTRACTS } from '@/lib/config'
 import GiftManagerABI from '@/abi/GiftManager.json'
 
-export function useGiftManagerRead(functionName: string, args?: any[]) {
+export function useGiftManagerRead(functionName: string, args?: unknown[]) {
   return useReadContract({
     address: CONTRACTS.GIFT_MANAGER,
     abi: GiftManagerABI,
@@ -15,7 +15,7 @@ export function useGiftManagerWrite() {
   return useWriteContract()
 }
 
-export function useWatchGiftSent(onLogs: (logs: any[]) => void) {
+export function useWatchGiftSent(onLogs: (logs: unknown[]) => void) {
   return useWatchContractEvent({
     address: CONTRACTS.GIFT_MANAGER,
     abi: GiftManagerABI,

@@ -2,7 +2,7 @@ import { useReadContract, useWriteContract } from 'wagmi'
 import { CONTRACTS } from '@/lib/config'
 import MockMNTABI from '@/abi/MockMNT.json'
 
-export function useMockMNTRead(functionName: string, args?: any[]) {
+export function useMockMNTRead(functionName: string, args?: unknown[]) {
   return useReadContract({
     address: CONTRACTS.MOCK_MNT,
     abi: MockMNTABI,

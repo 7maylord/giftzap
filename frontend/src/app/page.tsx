@@ -21,7 +21,7 @@ export default function Home() {
           <p className="text-xl text-gray-600 mb-8">Send gifts and earn badges on Mantle Network</p>
           <button
             onClick={login}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-6 rounded-lg"
           >
             Connect Wallet
           </button>
@@ -62,7 +62,7 @@ export default function Home() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
-                      ? 'border-indigo-500 text-indigo-600'
+                      ? 'border-primary text-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
