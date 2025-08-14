@@ -7,11 +7,14 @@ import SendGiftForm from '@/components/SendGiftForm'
 import GiftHistory from '@/components/GiftHistory'
 import TopGifters from '@/components/TopGifters'
 import CharityList from '@/components/CharityList'
+import NetworkIndicator from '@/components/NetworkIndicator'
+import { useNetworkSwitch } from '@/hooks/useNetworkSwitch'
 
 export default function Home() {
   const { login, logout, authenticated } = usePrivy()
   const { address } = useAccount()
   const [activeTab, setActiveTab] = useState('send')
+  const { isCorrectNetwork } = useNetworkSwitch()
 
   if (!authenticated) {
     return (
@@ -54,6 +57,7 @@ export default function Home() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
+            <NetworkIndicator />
             <div className="bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
               <span className="text-sm font-medium text-primary">
                 {address?.slice(0, 6)}...{address?.slice(-4)}
@@ -68,6 +72,24 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Network Warning Banner */}
+      {!isCorrectNetwork && (
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 mx-4 mt-4 rounded-r-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-red-500 text-xl">⚠️</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  <strong>Wrong Network:</strong> Please switch to Mantle Sepolia Testnet to use GiftZap properly.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-6xl mx-auto px-4 py-8 animate-fadeInUp">
         <div className="mb-8">

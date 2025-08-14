@@ -1,10 +1,12 @@
 import { createConfig, http } from 'wagmi'
 import { mantleSepoliaTestnet } from 'wagmi/chains'
 
+export const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || 'https://rpc.sepolia.mantle.xyz'
+
 export const config = createConfig({
   chains: [mantleSepoliaTestnet],
   transports: {
-    [mantleSepoliaTestnet.id]: http(process.env.NEXT_PUBLIC_RPC_URL as string)
+    [mantleSepoliaTestnet.id]: http(rpcUrl)
   }
 })
 

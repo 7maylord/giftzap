@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { parseEther, formatEther, keccak256, toHex, isAddress } from 'viem'
-import { useGiftManagerWrite } from '@/hooks/useGiftManager'
+import { useGiftManagerWrite, useGiftManagerRead } from '@/hooks/useGiftManager'
 import { useMockMNTWrite, useTokenBalance, useTokenAllowance } from '@/hooks/useMockMNT'
 import { useGetCharities } from '@/hooks/useGiftManager'
 import { CONTRACTS } from '@/lib/config'
 import { toast } from 'react-toastify'
+import GiftSuccessModal from './GiftSuccessModal'
 
 export default function SendGiftForm() {
   const { address } = useAccount()
@@ -17,6 +18,15 @@ export default function SendGiftForm() {
   const [giftType, setGiftType] = useState('')
   const [isCharity, setIsCharity] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [currentGiftDetails, setCurrentGiftDetails] = useState<{
+    recipient: string
+    amount: bigint
+    giftType: string
+    message: string
+    txHash?: string
+    giftId?: string
+  } | undefined>(undefined)
 
   const { writeContract: writeGiftManager } = useGiftManagerWrite()
   const { writeContract: writeMNT } = useMockMNTWrite()
@@ -24,6 +34,7 @@ export default function SendGiftForm() {
   const { data: balance } = useTokenBalance(address)
   const { data: allowance } = useTokenAllowance(address, CONTRACTS.GIFT_MANAGER)
   const { data: charitiesData } = useGetCharities()
+  const { data: giftCounter, refetch: refetchGiftCounter } = useGiftManagerRead('giftCounter')
 
   const charities = charitiesData ? {
     ids: charitiesData[0] as bigint[],
@@ -32,40 +43,6 @@ export default function SendGiftForm() {
     descriptions: charitiesData[3] as string[]
   } : null
 
-  const needsApproval = allowance !== undefined && parseEther(amount || '0') > allowance
-
-  const handleApprove = async () => {
-    if (!amount) {
-      toast.error('Please enter an amount')
-      return
-    }
-    
-    if (parseFloat(amount) <= 0) {
-      toast.error('Amount must be greater than 0')
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      toast.info('Approval transaction submitted. Please confirm in your wallet.')
-      
-      await writeMNT({
-        address: CONTRACTS.MOCK_MNT,
-        abi: (await import('@/abi/MockMNT.json')).default,
-        functionName: 'approve',
-        args: [CONTRACTS.GIFT_MANAGER, parseEther(amount)]
-      })
-      
-      toast.success('Token approval successful!')
-    } catch (error: unknown) {
-      console.error('Approval failed:', error)
-      const err = error as { shortMessage?: string; message?: string }
-      const errorMessage = err?.shortMessage || err?.message || 'Approval failed'
-      toast.error(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleSendGift = async () => {
     // Validation
@@ -102,17 +79,52 @@ export default function SendGiftForm() {
     setIsLoading(true)
     
     try {
-      toast.info('Gift transaction submitted. Please confirm in your wallet.')
+      const amountToSend = parseEther(amount)
+      
+      // Get current gift counter BEFORE sending
+      await refetchGiftCounter()
+      const currentCounter = giftCounter ? Number(giftCounter) : 0
+      const nextGiftId = currentCounter + 1
+      
+      // Check if approval is needed
+      if (allowance !== undefined && amountToSend > allowance) {
+        toast.info('Step 1: Approve tokens. Please confirm the approval transaction in your wallet.')
+        
+        // First approve the tokens
+        await writeMNT({
+          address: CONTRACTS.MOCK_MNT,
+          abi: (await import('@/abi/MockMNT.json')).default,
+          functionName: 'approve',
+          args: [CONTRACTS.GIFT_MANAGER, amountToSend]
+        })
+        
+        toast.success('✅ Token approval confirmed!')
+      }
+      
+      toast.info('Step 2: Send gift. Please confirm the gift transaction in your wallet.')
       
       const giftTypeHash = keccak256(toHex(giftType))
       const messageHash = keccak256(toHex(message))
       
-      await writeGiftManager({
+      const txResult = await writeGiftManager({
         address: CONTRACTS.GIFT_MANAGER,
         abi: (await import('@/abi/GiftManager.json')).default,
         functionName: 'sendGift',
-        args: [recipient, parseEther(amount), giftTypeHash, messageHash, isCharity]
+        args: [recipient, amountToSend, giftTypeHash, messageHash, isCharity]
       })
+      
+      // Store gift details and show modal with the known gift ID
+      const giftDetails = {
+        recipient,
+        amount: amountToSend,
+        giftType,
+        message,
+        txHash: txResult,
+        giftId: nextGiftId.toString()
+      }
+      
+      setCurrentGiftDetails(giftDetails)
+      setShowSuccessModal(true)
       
       toast.success('🎁 Gift sent successfully!')
       
@@ -123,9 +135,9 @@ export default function SendGiftForm() {
       setGiftType('')
       setIsCharity(false)
     } catch (error: unknown) {
-      console.error('Gift sending failed:', error)
+      console.error('Transaction failed:', error)
       const err = error as { shortMessage?: string; message?: string }
-      const errorMessage = err?.shortMessage || err?.message || 'Failed to send gift'
+      const errorMessage = err?.shortMessage || err?.message || 'Transaction failed'
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -160,8 +172,20 @@ export default function SendGiftForm() {
     }
   }
 
+  const handleCloseModal = () => {
+    setShowSuccessModal(false)
+    setCurrentGiftDetails(undefined)
+  }
+
   return (
-    <div className="space-y-6 animate-fadeInUp">
+    <>
+      <GiftSuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleCloseModal}
+        giftDetails={currentGiftDetails}
+      />
+      
+      <div className="space-y-6 animate-fadeInUp">
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/10 to-accent/10 px-6 py-3 rounded-2xl border border-primary/20 mb-4">
           <span className="text-2xl">🎁</span>
@@ -195,7 +219,7 @@ export default function SendGiftForm() {
       </div>
 
       <div className="space-y-6">
-        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-soft">
+        <div className="p-4 rounded-xl border border-gray-200 shadow-soft">
           <label className="flex items-center cursor-pointer group">
             <input
               type="checkbox"
@@ -224,14 +248,35 @@ export default function SendGiftForm() {
             <select
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50 cursor-pointer"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 hover:border-primary/50 cursor-pointer"
             >
               <option value="">Select a charity</option>
-              {charities.addresses.map((address, index) => (
-                <option key={index} value={address}>
-                  {Buffer.from(charities.names[index].slice(2), 'hex').toString()} ({address.slice(0, 6)}...{address.slice(-4)})
-                </option>
-              ))}
+              {charities.addresses.map((address, index) => {
+                let charityName = 'Unknown Charity'
+                try {
+                  const nameBytes = charities.names[index]
+                  if (typeof nameBytes === 'string' && nameBytes.startsWith('0x')) {
+                    const nameHex = nameBytes.slice(2)
+                    if (nameHex) {
+                      charityName = Buffer.from(nameHex, 'hex').toString('utf8').replace(/\0/g, '').trim()
+                    }
+                  } else if (typeof nameBytes === 'string') {
+                    charityName = nameBytes.trim()
+                  }
+                  if (!charityName) {
+                    charityName = `Charity #${Number(charities.ids[index])}`
+                  }
+                } catch (error) {
+                  console.error('Error parsing charity name:', error)
+                  charityName = `Charity #${Number(charities.ids[index])}`
+                }
+                
+                return (
+                  <option key={index} value={address}>
+                    {charityName} ({address.slice(0, 6)}...{address.slice(-4)})
+                  </option>
+                )
+              })}
             </select>
           </div>
         ) : (
@@ -244,7 +289,7 @@ export default function SendGiftForm() {
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder="0x..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 hover:border-primary/50"
             />
           </div>
         )}
@@ -270,7 +315,7 @@ export default function SendGiftForm() {
           <select
             value={giftType}
             onChange={(e) => setGiftType(e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50 cursor-pointer"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 hover:border-primary/50 cursor-pointer"
           >
             <option value="">Select gift type</option>
             <optgroup label="🎉 Celebrations">
@@ -319,40 +364,20 @@ export default function SendGiftForm() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Add a personal message..."
             rows={3}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50 resize-none"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 hover:border-primary/50 resize-none"
           />
         </div>
 
-        <div className="flex space-x-4 pt-4">
-          {needsApproval && (
-            <button
-              onClick={handleApprove}
-              disabled={isLoading || !amount}
-              className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:bg-gray-300 text-white font-bold py-4 px-6 rounded-xl hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-            >
-              {isLoading ? (
-                <>
-                  <div className="loading-spinner"></div>
-                  Approving...
-                </>
-              ) : (
-                <>
-                  <span>🔓</span>
-                  Approve {amount} MNT
-                </>
-              )}
-            </button>
-          )}
-          
+        <div className="pt-4">
           <button
             onClick={handleSendGift}
-            disabled={isLoading || !recipient || !amount || !giftType || needsApproval}
-            className="flex-1 button-gradient text-primary-foreground font-bold py-4 px-6 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 shadow-lg animate-pulse-glow"
+            disabled={isLoading || !recipient || !amount || !giftType}
+            className="w-full button-gradient text-primary-foreground font-bold py-4 px-6 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 shadow-lg animate-pulse-glow"
           >
             {isLoading ? (
               <>
                 <div className="loading-spinner"></div>
-                Sending...
+                Processing...
               </>
             ) : (
               <>
@@ -364,6 +389,7 @@ export default function SendGiftForm() {
           </button>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

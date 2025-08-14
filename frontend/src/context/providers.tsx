@@ -21,6 +21,15 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         },
         defaultChain: mantleSepoliaTestnet,
         supportedChains: [mantleSepoliaTestnet],
+        embeddedWallets: {
+          createOnLogin: 'users-without-wallets',
+          requireUserPasswordOnCreate: true,
+        },
+        externalWallets: {
+          metamask: true,
+          coinbaseWallet: true,
+          walletConnect: true,
+        },
       }}
     >
       <QueryClientProvider client={queryClient}>

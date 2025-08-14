@@ -50,15 +50,45 @@ export default function CharityList() {
           let description = 'No description available'
           
           try {
-            name = Buffer.from(nameBytes.slice(2), 'hex').toString().replace(/\0/g, '')
-            const descJson = JSON.parse(Buffer.from(descBytes.slice(2), 'hex').toString().replace(/\0/g, ''))
-            description = descJson.description || 'No description available'
+            // Parse name - handle both string and hex formats
+            if (typeof nameBytes === 'string' && nameBytes.startsWith('0x')) {
+              const nameHex = nameBytes.slice(2)
+              if (nameHex) {
+                name = Buffer.from(nameHex, 'hex').toString('utf8').replace(/\0/g, '').trim()
+              }
+            } else if (typeof nameBytes === 'string') {
+              name = nameBytes.trim()
+            }
+            
+            // Parse description - handle both JSON string and hex formats
+            if (typeof descBytes === 'string' && descBytes.startsWith('0x')) {
+              const descHex = descBytes.slice(2)
+              if (descHex) {
+                const descString = Buffer.from(descHex, 'hex').toString('utf8').replace(/\0/g, '').trim()
+                try {
+                  const descJson = JSON.parse(descString)
+                  description = descJson.description || descString || 'No description available'
+                } catch {
+                  // If not JSON, use the string directly
+                  description = descString || 'No description available'
+                }
+              }
+            } else if (typeof descBytes === 'string') {
+              description = descBytes.trim() || 'No description available'
+            }
+            
+            // Fallback if name is empty
+            if (!name || name === '') {
+              name = `Charity #${Number(charities.ids[index])}`
+            }
           } catch (error) {
-            console.error('Error parsing charity data:', error)
+            console.error('Error parsing charity data:', error, { nameBytes, descBytes })
+            name = `Charity #${Number(charities.ids[index])}`
+            description = 'Unable to load description'
           }
           
           return (
-            <div key={index} className="border rounded-lg p-6 bg-white shadow-sm hover:shadow-md transition-shadow">
+            <div key={index} className="border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">

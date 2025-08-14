@@ -238,3 +238,21 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   line-height: 1.6;
 }
+
+/* Form elements styling for consistent visibility */
+input, select, textarea {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #d1d5db;
+}
+
+select option {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+/* Ensure placeholder text is visible */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280;
+}
