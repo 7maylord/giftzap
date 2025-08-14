@@ -43,9 +43,14 @@ export default function RootLayout({
             draggable
             pauseOnHover
             theme="light"
+            toastClassName="!bg-white !text-gray-800 !shadow-lg !border !border-gray-200 !rounded-xl"
+            bodyClassName="!text-sm !font-medium"
+            progressClassName="!bg-gradient-to-r !from-primary !to-primary-light"
             toastStyle={{
               backgroundColor: 'white',
               color: '#171717',
+              borderRadius: '12px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
             }}
           />
         </Providers>

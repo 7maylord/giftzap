@@ -45,19 +45,26 @@ export default function ConfettiAnimation({
 
   return (
     <div 
-      className={`fixed inset-0 pointer-events-none z-50 flex items-center justify-center ${className}`}
+      className={`fixed inset-0 pointer-events-none z-50 flex items-center justify-center animate-scaleIn ${className}`}
       style={{ zIndex: 9999 }}
     >
-      <Lottie
-        animationData={animationData}
-        loop={false}
-        autoplay={true}
-        style={{ width: size, height: size }}
-        onComplete={() => {
-          setShouldPlay(false)
-          onComplete?.()
-        }}
-      />
+      <div className="relative">
+        <Lottie
+          animationData={animationData}
+          loop={false}
+          autoplay={true}
+          style={{ width: size, height: size }}
+          onComplete={() => {
+            setShouldPlay(false)
+            onComplete?.()
+          }}
+          rendererSettings={{
+            preserveAspectRatio: 'xMidYMid slice',
+            progressiveLoad: true
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-gradient rounded-full"></div>
+      </div>
     </div>
   )
 }

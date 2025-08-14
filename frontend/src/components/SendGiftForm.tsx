@@ -161,32 +161,58 @@ export default function SendGiftForm() {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">Send a Gift</h2>
+    <div className="space-y-6 animate-fadeInUp">
+      <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-3 bg-gradient-to-r from-primary/10 to-accent/10 px-6 py-3 rounded-2xl border border-primary/20 mb-4">
+          <span className="text-2xl">🎁</span>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Send a Gift</h2>
+          <span className="text-2xl">✨</span>
+        </div>
+        <p className="text-gray-600 max-w-md mx-auto">Spread joy and create memories on the blockchain</p>
+      </div>
       
-      <div className="bg-blue-50 p-4 rounded-lg">
-        <p className="text-sm text-blue-800">
-          Balance: {balance ? formatEther(balance) : '0'} MNT
-        </p>
-        <button
-          onClick={handleMintTokens}
-          disabled={isLoading}
-          className="mt-2 text-blue-600 hover:text-blue-800 text-sm underline"
-        >
-          Mint 1000 MNT (Testnet)
-        </button>
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200/50 card-hover">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-blue-700 mb-1">Your Balance</p>
+            <p className="text-2xl font-bold text-blue-900">
+              {balance ? formatEther(balance) : '0'} MNT
+            </p>
+          </div>
+          <button
+            onClick={handleMintTokens}
+            disabled={isLoading}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-medium hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isLoading ? (
+              <div className="loading-spinner"></div>
+            ) : (
+              <span>💰</span>
+            )}
+            Mint 1000 MNT
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center">
+      <div className="space-y-6">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-soft">
+          <label className="flex items-center cursor-pointer group">
             <input
               type="checkbox"
               checked={isCharity}
               onChange={(e) => setIsCharity(e.target.checked)}
-              className="mr-2"
+              className="sr-only"
             />
-            Send to Charity
+            <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center transition-all duration-300 ${
+              isCharity
+                ? 'bg-accent border-accent text-white'
+                : 'border-gray-300 group-hover:border-accent'
+            }`}>
+              {isCharity && <span className="text-xs">✓</span>}
+            </div>
+            <span className="font-medium text-gray-700 group-hover:text-accent transition-colors">
+              ❤️ Send to Charity
+            </span>
           </label>
         </div>
 
@@ -198,7 +224,7 @@ export default function SendGiftForm() {
             <select
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50 cursor-pointer"
             >
               <option value="">Select a charity</option>
               {charities.addresses.map((address, index) => (
@@ -218,7 +244,7 @@ export default function SendGiftForm() {
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
               placeholder="0x..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50"
             />
           </div>
         )}
@@ -233,7 +259,7 @@ export default function SendGiftForm() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50"
           />
         </div>
 
@@ -244,7 +270,7 @@ export default function SendGiftForm() {
           <select
             value={giftType}
             onChange={(e) => setGiftType(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50 cursor-pointer"
           >
             <option value="">Select gift type</option>
             <optgroup label="🎉 Celebrations">
@@ -293,27 +319,48 @@ export default function SendGiftForm() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Add a personal message..."
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50 resize-none"
           />
         </div>
 
-        <div className="flex space-x-4">
+        <div className="flex space-x-4 pt-4">
           {needsApproval && (
             <button
               onClick={handleApprove}
               disabled={isLoading || !amount}
-              className="flex-1 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-300 text-white font-bold py-3 px-6 rounded-lg"
+              className="flex-1 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 disabled:bg-gray-300 text-white font-bold py-4 px-6 rounded-xl hover-lift transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
             >
-              {isLoading ? 'Approving...' : `Approve ${amount} MNT`}
+              {isLoading ? (
+                <>
+                  <div className="loading-spinner"></div>
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <span>🔓</span>
+                  Approve {amount} MNT
+                </>
+              )}
             </button>
           )}
           
           <button
             onClick={handleSendGift}
             disabled={isLoading || !recipient || !amount || !giftType || needsApproval}
-            className="flex-1 bg-primary hover:bg-primary/90 disabled:bg-gray-300 text-primary-foreground font-bold py-3 px-6 rounded-lg"
+            className="flex-1 button-gradient text-primary-foreground font-bold py-4 px-6 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2 shadow-lg animate-pulse-glow"
           >
-            {isLoading ? 'Sending...' : 'Send Gift 🎁'}
+            {isLoading ? (
+              <>
+                <div className="loading-spinner"></div>
+                Sending...
+              </>
+            ) : (
+              <>
+                <span>🎁</span>
+                Send Gift
+                <span>✨</span>
+              </>
+            )}
           </button>
         </div>
       </div>

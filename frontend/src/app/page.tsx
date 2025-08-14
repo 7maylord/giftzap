@@ -15,31 +15,53 @@ export default function Home() {
 
   if (!authenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">🎁 GiftZap</h1>
-          <p className="text-xl text-gray-600 mb-8">Send gifts and earn badges on Mantle Network</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-indigo-500/5 to-purple-500/5"></div>
+        <div className="text-center animate-fadeInUp relative z-10 max-w-lg mx-auto px-6">
+          <div className="mb-8">
+            <div className="text-6xl mb-4 animate-pulse-glow inline-block">🎁</div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary-light to-accent bg-clip-text text-transparent mb-4">
+              GiftZap
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              Send gifts and earn badges on Mantle Network with style and security
+            </p>
+          </div>
           <button
             onClick={login}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 px-6 rounded-lg"
+            className="button-gradient text-primary-foreground font-bold py-4 px-8 rounded-xl text-lg hover-lift inline-flex items-center gap-3 shadow-lg"
           >
+            <span>✨</span>
             Connect Wallet
+            <span>🚀</span>
           </button>
+          <div className="mt-8 text-sm text-gray-500 animate-slideInRight">
+            Powered by secure blockchain technology
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-indigo-50/30">
+      <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-white/20 sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">🎁 GiftZap</h1>
+          <div className="flex items-center gap-3">
+            <span className="text-3xl animate-pulse-glow">🎁</span>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              GiftZap
+            </h1>
+          </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">{address?.slice(0, 6)}...{address?.slice(-4)}</span>
+            <div className="bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
+              <span className="text-sm font-medium text-primary">
+                {address?.slice(0, 6)}...{address?.slice(-4)}
+              </span>
+            </div>
             <button
               onClick={logout}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg"
+              className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover-lift transition-all duration-300"
             >
               Disconnect
             </button>
@@ -47,37 +69,41 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-8 animate-fadeInUp">
         <div className="mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl border border-white/40 shadow-soft">
+            <nav className="flex space-x-1 p-2">
               {[
-                { id: 'send', label: 'Send Gift' },
-                { id: 'history', label: 'My Gifts' },
-                { id: 'leaderboard', label: 'Leaderboard' },
-                { id: 'charities', label: 'Charities' }
-              ].map((tab) => (
+                { id: 'send', label: '🎁 Send Gift', emoji: '🎁' },
+                { id: 'history', label: '📜 My Gifts', emoji: '📜' },
+                { id: 'leaderboard', label: '🏆 Leaderboard', emoji: '🏆' },
+                { id: 'charities', label: '❤️ Charities', emoji: '❤️' }
+              ].map((tab, index) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  className={`flex-1 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
                     activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'bg-white text-primary shadow-medium border border-primary/20 scale-105'
+                      : 'text-gray-600 hover:text-primary hover:bg-white/50 hover:scale-102'
                   }`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  {tab.label}
+                  <span className="mr-2">{tab.emoji}</span>
+                  {tab.label.split(' ')[1]}
                 </button>
               ))}
             </nav>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          {activeTab === 'send' && <SendGiftForm />}
-          {activeTab === 'history' && <GiftHistory />}
-          {activeTab === 'leaderboard' && <TopGifters />}
-          {activeTab === 'charities' && <CharityList />}
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-large border border-white/40 p-8 card-hover">
+          <div className="animate-scaleIn">
+            {activeTab === 'send' && <SendGiftForm />}
+            {activeTab === 'history' && <GiftHistory />}
+            {activeTab === 'leaderboard' && <TopGifters />}
+            {activeTab === 'charities' && <CharityList />}
+          </div>
         </div>
       </main>
     </div>
