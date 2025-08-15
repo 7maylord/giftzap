@@ -76,15 +76,18 @@ export default function SendGiftForm() {
       return
     }
 
-    setIsLoading(true)
+    let amountToSend: bigint
+    let currentCounter: number
     
     try {
-      const amountToSend = parseEther(amount)
+      amountToSend = parseEther(amount)
       
       // Get current gift counter BEFORE sending
-      await refetchGiftCounter()
-      const currentCounter = giftCounter ? Number(giftCounter) : 0
+      const counterResult = await refetchGiftCounter()
+      currentCounter = counterResult.data ? Number(counterResult.data) : 0
       const nextGiftId = currentCounter + 1
+      
+      setIsLoading(true)
       
       // Check if approval is needed
       if (allowance !== undefined && amountToSend > allowance) {
@@ -119,21 +122,27 @@ export default function SendGiftForm() {
         amount: amountToSend,
         giftType,
         message,
-        txHash: txResult,
+        txHash: typeof txResult === 'string' ? txResult : undefined,
         giftId: nextGiftId.toString()
       }
       
+      console.log('Gift Details:', giftDetails) // Debug log
+      
+      // Update success state first
       setCurrentGiftDetails(giftDetails)
       setShowSuccessModal(true)
       
+      // Show success toast
       toast.success('🎁 Gift sent successfully!')
       
-      // Reset form
-      setRecipient('')
-      setAmount('')
-      setMessage('')
-      setGiftType('')
-      setIsCharity(false)
+      // Reset form after a short delay
+      setTimeout(() => {
+        setRecipient('')
+        setAmount('')
+        setMessage('')
+        setGiftType('')
+        setIsCharity(false)
+      }, 500)
     } catch (error: unknown) {
       console.error('Transaction failed:', error)
       const err = error as { shortMessage?: string; message?: string }
@@ -200,7 +209,7 @@ export default function SendGiftForm() {
           <div>
             <p className="text-sm font-medium text-blue-700 mb-1">Your Balance</p>
             <p className="text-2xl font-bold text-blue-900">
-              {balance ? formatEther(balance) : '0'} MNT
+              {balance && typeof balance === 'bigint' ? formatEther(balance) : '0'} MNT
             </p>
           </div>
           <button

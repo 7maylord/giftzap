@@ -42,22 +42,11 @@ export function useNetworkSwitch() {
   const promptNetworkSwitch = () => {
     if (!isConnected || isCorrectNetwork || hasPrompted || isPending) return
 
-    toast.warn(
-      <div>
-        <p><strong>Wrong Network!</strong></p>
-        <p>Please switch to Mantle Sepolia Testnet to use this app.</p>
-        <button 
-          onClick={switchToMantleSepoliaTestnet}
-          className="mt-2 bg-primary hover:bg-primary-dark text-white px-3 py-1 rounded text-sm"
-          disabled={isPending}
-        >
-          {isPending ? 'Switching...' : 'Switch Network'}
-        </button>
-      </div>,
-      { 
+    toast.warn('Wrong Network! Please switch to Mantle Sepolia Testnet to use this app.', {
         autoClose: false,
         closeOnClick: false,
-        toastId: 'network-switch'
+        toastId: 'network-switch',
+        onClick: switchToMantleSepoliaTestnet
       }
     )
   }
