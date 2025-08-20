@@ -248,9 +248,9 @@ contract GiftManagerTest is Test {
         // Should return 2 active charities (1 and 3, since 2 was removed)
         assertEq(ids.length, 2);
         assertEq(addresses[0], charity);
-        assertEq(names[0], keccak256("Mantle Aid"));
+        assertEq(names[0], "Mantle Aid");
         assertEq(addresses[1], user1);
-        assertEq(names[1], keccak256("Tech Fund"));
+        assertEq(names[1], "Tech Fund");
     }
 
     function testRecoverTokens() public {
