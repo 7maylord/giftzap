@@ -5,14 +5,14 @@
 GiftZap is a decentralized peer-to-peer micro-gifting platform built on Mantle Network L2 sepolia testnet, it allows uses to send MNT-based gifts with customizable messages, donate to charities, share gifts via X or whatsapp. The Platform awards ERC-721 Badge NFTs for milestones and charity donations. The frontend is built with Next.js (TypeScript), Privy for wallet authentication, Wagmi for contract interactions, Tailwind CSS v4 for styling, and Lottie for animations.
 
 
-
-
 ## ✨ Features
 
 ### 🎯 Core Functionality
 - **Digital Gift Sending**: Send MNT tokens as gifts with personalized messages
 - **Gift Redemption**: Recipients can redeem gifts through unique URLs
 - **Charity Donations**: Dedicated charity giving with special recognition
+- **Admin Dashboard**: Full charity management interface for platform owners
+- **IPFS Integration**: Decentralized metadata storage for charities via Pinata
 - **Social Sharing**: Share gifts via social media and QR codes
 - **Mobile Responsive**: Full mobile support with intuitive UI
 
@@ -68,7 +68,7 @@ cd giftzap
 ```bash
 cd frontend
 yarn install
-cp .env.example .env.local
+cp .env.example 
 # Configure environment variables
 yarn run dev
 ```
@@ -79,14 +79,19 @@ cd smart-contracts
 forge install
 forge build
 forge test
+
+forge script script/DeployWithCharities.s.sol:DeployWithCharities --rpc-url mantle_sepolia --broadcast --verify 
 ```
 
-4. **Setup NFT Assets**
+4. **Setup NFT Assets & Charity Management**
 ```bash
 cd nft-asset
 yarn install
 # Configure Pinata credentials in .env
 node upload.js
+
+# Upload charity metadata (optional)
+node upload-charities.js charities-example.json
 ```
 
 ### Environment Variables
@@ -95,9 +100,11 @@ node upload.js
 ```env
 NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id
 NEXT_PUBLIC_RPC_URL=https://rpc.sepolia.mantle.xyz
-NEXT_PUBLIC_GIFT_MANAGER_ADDRESS=0x...
-NEXT_PUBLIC_BADGE_NFT_ADDRESS=0x...
-NEXT_PUBLIC_MOCK_MNT_ADDRESS=0x...
+NEXT_PUBLIC_GIFT_MANAGER_ADDRESS=0x5239E69677F1C112F42FDFCd7989d9982101224F
+NEXT_PUBLIC_BADGE_NFT_ADDRESS=0xfdBe17eA174CD945CBD6bfC13A9E4Eb14392dfDd
+NEXT_PUBLIC_MOCK_MNT_ADDRESS=0xE2056b401Fa9FE83ec3e0384aff076Be8eA5e283
+NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token
+NEXT_PUBLIC_PINATA_GATEWAY=your_pinata_gateway_url
 ```
 
 #### Smart Contracts (`.env`)
@@ -118,11 +125,13 @@ PINATA_SECRET_API_KEY=your_pinata_secret_key
 - **Purpose**: Core business logic for gift management
 - **Features**: 
   - Gift sending and redemption
-  - Charity management
-  - Favorites system
-  - Achievement tracking
+  - Advanced charity management with IPFS metadata
+  - Favorites system for frequent recipients
+  - Achievement tracking and milestone rewards
+  - Owner-only charity administration
 - **Security**: ReentrancyGuard, Ownable pattern
 - **Events**: Comprehensive event logging for UI updates
+- **Storage**: IPFS-based charity metadata via Pinata integration
 
 ### BadgeNFT Contract
 - **Standard**: ERC-721 with AccessControl
@@ -134,10 +143,9 @@ PINATA_SECRET_API_KEY=your_pinata_secret_key
 
 ### Contract Addresses (Mantle Sepolia)
 ```
-GiftManager: 0xcA3f02A32C333e4fc00E3Bd91C648e7deAb5d9eB
-BadgeNFT: 0x5A9354cDF593ca32E057207Ceb4AEa161208814B
-MockMNT: 0x23B3C1D91d1cA80fA157A65fF3B9e7BfD3E79C35
-
+GiftManager: 0x5239E69677F1C112F42FDFCd7989d9982101224F
+BadgeNFT: 0xfdBe17eA174CD945CBD6bfC13A9E4Eb14392dfDd
+MockMNT: 0xE2056b401Fa9FE83ec3e0384aff076Be8eA5e283
 ```
 
 ## 🎨 Frontend Architecture
@@ -148,6 +156,8 @@ src/
 ├── app/                    # Next.js app router
 │   ├── page.tsx           # Main dashboard
 │   ├── layout.tsx         # Root layout
+│   ├── admin/             # Admin dashboard
+│   │   └── page.tsx       # Charity management interface
 │   └── redeem/[giftId]/   # Gift redemption pages
 ├── components/            # Reusable UI components
 │   ├── SendGiftForm.tsx   # Gift sending interface
@@ -177,6 +187,18 @@ src/
 - Automatic NFT minting on milestone achievements
 - IPFS metadata with trait attributes
 - Achievement notifications in UI
+
+#### Admin Dashboard
+- **Owner Authentication**: Automatic detection of contract owner
+- **Charity Management**: Add, remove, and view charities
+- **IPFS Integration**: Automatic metadata upload to Pinata
+- **Real-time Updates**: Live charity data from smart contracts
+
+#### Charity Management System
+1. **JSON-based Setup**: Bulk upload charities via JSON file
+2. **IPFS Storage**: Decentralized metadata with Pinata
+3. **Smart Contract Integration**: Direct interaction with GiftManager
+4. **Admin Interface**: User-friendly charity management dashboard
 
 #### Responsive Design
 - Mobile-first approach
@@ -212,8 +234,14 @@ forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast
 ### Smart Contract Deployment
 ```bash
 cd smart-contracts
-# Deploy to Mantle Sepolia
-forge script script/Deploy.s.sol \
+# Deploy to Mantle Sepolia with charities
+forge script script/DeployWithCharities.s.sol:DeployWithCharities \
+  --rpc-url https://rpc.sepolia.mantle.xyz \
+  --broadcast \
+  --verify
+
+# Or deploy basic contracts first
+forge script script/Deploy.s.sol:Deploy \
   --rpc-url https://rpc.sepolia.mantle.xyz \
   --broadcast \
   --verify

@@ -28,13 +28,6 @@ contract Deploy is Script {
 
         badgeNFT.grantRole(keccak256("MINTER_ROLE"), address(giftManager));
 
-        // Add sample charities with IPFS metadata URIs
-        // Replace these IPFS hashes with actual ones from charity-config.json after running upload-charities.js
-        giftManager.addCharity(address(0x1234567890123456789012345678901234567890), "Mantle Aid", "QmYourIPFSHashHere1");
-        giftManager.addCharity(
-            address(0x0987654321098765432109876543210987654321), "Crypto Charity", "QmYourIPFSHashHere2"
-        );
-
         vm.stopBroadcast();
     }
 }
