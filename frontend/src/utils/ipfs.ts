@@ -1,6 +1,5 @@
 import { create } from 'ipfs-http-client'
 
-
 interface GiftMetadata {
   giftType: string
   message: string
@@ -15,26 +14,36 @@ interface CharityMetadata {
   website?: string
 }
 
+// Environment configuration
 const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT
 const PINATA_GATEWAY = process.env.NEXT_PUBLIC_PINATA_GATEWAY
 
-if (!PINATA_JWT) {
-  console.warn('PINATA_JWT not found in environment variables')
-}
-
-if (!PINATA_GATEWAY) {
-  console.warn('PINATA_GATEWAY not found in environment variables')
-}
-
 // Create IPFS client for Pinata
-const ipfs = create({
-  host: 'api.pinata.cloud',
-  port: 443,
-  protocol: 'https',
-  headers: {
-    Authorization: `Bearer ${PINATA_JWT}`,
-  },
-})
+const createIPFSClient = () => {
+  if (!PINATA_JWT) {
+    console.warn('PINATA_JWT not found in environment variables')
+  }
+  console.log('Using Pinata IPFS service')
+  return create({
+    host: 'api.pinata.cloud',
+    port: 443,
+    protocol: 'https',
+    headers: {
+      Authorization: `Bearer ${PINATA_JWT}`,
+    },
+  })
+}
+
+const ipfs = createIPFSClient()
+
+// Get appropriate gateway URL
+const getGatewayUrl = (cid: string): string => {
+  if (PINATA_GATEWAY) {
+    return `${PINATA_GATEWAY}/ipfs/${cid}`
+  } else {
+    return `https://gateway.pinata.cloud/ipfs/${cid}`
+  }
+}
 
 export async function uploadToIPFS(data: unknown): Promise<string> {
   try {
@@ -54,10 +63,11 @@ export async function uploadToIPFS(data: unknown): Promise<string> {
       wrapWithDirectory: false,
     })
 
+    console.log(`Uploaded to IPFS: ${result.cid.toString()}`)
     return result.cid.toString()
   } catch (error) {
     console.error('IPFS upload failed:', error)
-    throw new Error('Failed to upload to IPFS')
+    throw new Error(`Failed to upload to IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
@@ -76,11 +86,9 @@ export async function uploadCharityMetadata(charityData: CharityMetadata): Promi
 
 export async function fetchFromIPFS(cid: string): Promise<unknown> {
   try {
-    if (!PINATA_GATEWAY) {
-      throw new Error('Pinata gateway not configured')
-    }
-
-    const url = `${PINATA_GATEWAY}/ipfs/${cid}`
+    const url = getGatewayUrl(cid)
+    console.log(`Fetching from IPFS: ${url}`)
+    
     const response = await fetch(url)
     
     if (!response.ok) {
@@ -90,16 +98,16 @@ export async function fetchFromIPFS(cid: string): Promise<unknown> {
     return await response.json()
   } catch (error) {
     console.error('IPFS fetch failed:', error)
-    throw new Error('Failed to fetch from IPFS')
+    throw new Error(`Failed to fetch from IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
 export async function fetchGiftMetadata(cid: string): Promise<GiftMetadata> {
-  return fetchFromIPFS(cid)
+  return fetchFromIPFS(cid) as Promise<GiftMetadata>
 }
 
 export async function fetchCharityMetadata(cid: string): Promise<CharityMetadata> {
-  return fetchFromIPFS(cid)
+  return fetchFromIPFS(cid) as Promise<CharityMetadata>
 }
 
 // Helper function to convert string to bytes32 hash (for contract compatibility)

@@ -117,25 +117,25 @@ export default function Home() {
     <AnimatedBackground>
       {!authenticated ? (
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center animate-fadeInUp max-w-lg mx-auto px-6">
-            <div className="mb-8">
-              <div className="text-6xl mb-4 animate-pulse-glow inline-block">🎁</div>
-              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-primary-light to-accent bg-clip-text text-transparent mb-4">
+          <div className="text-center animate-fadeInUp max-w-2xl mx-auto px-6">
+            <div className="mb-12">
+              <div className="text-7xl mb-6 animate-pulse-glow inline-block drop-shadow-lg">🎁</div>
+              <h1 className="text-6xl font-bold bg-gradient-to-r from-[#32CD32] to-[#98FB98] bg-clip-text text-transparent mb-6 drop-shadow-sm">
                 GiftZap
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-2xl text-[#32CD32] mb-10 leading-relaxed font-semibold drop-shadow-sm">
                 Send gifts and earn badges on Mantle Network with style and security
               </p>
             </div>
             <button
               onClick={login}
-              className="button-gradient text-primary-foreground font-bold py-4 px-8 rounded-xl text-lg hover-lift inline-flex items-center gap-3 shadow-lg"
+              className="bg-gradient-to-r from-[#32CD32] to-[#98FB98] text-white font-bold py-5 px-10 rounded-xl text-xl hover-lift inline-flex items-center gap-4 shadow-xl hover:opacity-90 transition-all"
             >
-              <span>✨</span>
+              <span className="text-2xl">✨</span>
               Connect Wallet
-              <span>🚀</span>
+              <span className="text-2xl">🚀</span>
             </button>
-            <div className="mt-8 text-sm text-gray-500 animate-slideInRight">
+            <div className="mt-10 text-base text-[#32CD32] animate-slideInRight font-semibold">
               Powered by secure blockchain technology
             </div>
           </div>

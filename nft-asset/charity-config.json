@@ -1,0 +1,25 @@
+{
+  "charities": [
+    {
+      "name": "Mantle Aid",
+      "description": "Supports blockchain education and development on the Mantle network",
+      "logo": "mantle-aid.jpg",
+      "website": "https://mantleaid.org",
+      "walletAddress": "0xbE3171d0e36a012319a5C76bCcD71250499b1C16",
+      "ipfsHash": "QmRypt7UoEBbpnzWX7vxrTmY9HF6JZaWujPXSHDkRtiLf5",
+      "ipfsUrl": "ipfs://QmRypt7UoEBbpnzWX7vxrTmY9HF6JZaWujPXSHDkRtiLf5",
+      "gatewayUrl": "https://gateway.pinata.cloud/ipfs/QmRypt7UoEBbpnzWX7vxrTmY9HF6JZaWujPXSHDkRtiLf5"
+    },
+    {
+      "name": "Crypto Charity",
+      "description": "Funds open-source blockchain projects and developer education",
+      "logo": "crypto-charity.jpg",
+      "website": "https://cryptocharity.org",
+      "walletAddress": "0x801ce3C86a4075F094C973D8Dd5e2bD5cde6a873",
+      "ipfsHash": "QmQKwVEh9KcFT8MquCSNrW4et71DrVDQpKwFEfV9GzUCjh",
+      "ipfsUrl": "ipfs://QmQKwVEh9KcFT8MquCSNrW4et71DrVDQpKwFEfV9GzUCjh",
+      "gatewayUrl": "https://gateway.pinata.cloud/ipfs/QmQKwVEh9KcFT8MquCSNrW4et71DrVDQpKwFEfV9GzUCjh"
+    }
+  ],
+  "timestamp": "2025-08-20T19:02:06.909Z"
+}

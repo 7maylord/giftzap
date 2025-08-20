@@ -22,25 +22,30 @@ export default function GiftSuccessModal({ isOpen, onClose, giftDetails }: GiftS
   const [isWaiting, setIsWaiting] = useState(true)
 
   useEffect(() => {
-    console.log('Modal State:', { isOpen, giftDetails, isWaiting }) // Debug log
+    if (isOpen) {
+      if (!giftDetails) {
+        // If there are no gift details, close the modal (transaction cancelled/failed)
+        onClose();
+        return;
+      }
 
-    if (isOpen && giftDetails?.txHash) {
-      setIsWaiting(true)
-      
-      // Wait for 2 seconds before showing sharing options
-      const timer = setTimeout(() => {
-        console.log('Switching to share view') // Debug log
-        setIsWaiting(false)
-      }, 2000)
-      
-      return () => clearTimeout(timer)
+      if (giftDetails.txHash) {
+        setIsWaiting(true);
+        
+        // Wait for 2 seconds before showing sharing options
+        const timer = setTimeout(() => {
+          setIsWaiting(false);
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      }
     }
 
     // Reset state when modal closes
     if (!isOpen) {
-      setIsWaiting(true)
+      setIsWaiting(true);
     }
-  }, [isOpen, giftDetails, isWaiting])
+  }, [isOpen, giftDetails, onClose])
 
   // Don't render if modal is not open or no gift details
   if (!isOpen || !giftDetails) return null
@@ -73,7 +78,7 @@ Claim your gift here: ${claimLink}`
               <div className="mb-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Processing Gift</h3>
+              <h3 className="text-lg text-gray-800 font-semibold mb-2">Processing Gift</h3>
               <p className="text-gray-600">Please wait while we confirm your transaction...</p>
             </div>
           ) : (

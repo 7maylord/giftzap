@@ -12,8 +12,8 @@ contract GiftManager is ReentrancyGuard, Ownable {
 
     struct Charity {
         address charityAddress;
-        bytes32 name;
-        bytes32 descriptionHash;
+        string name;
+        string metadataURI;
         bool active;
     }
 
@@ -57,7 +57,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
     event GiftRedeemed(uint256 indexed giftId, address indexed recipient);
     event BadgeEarned(address indexed user, uint256 milestone);
     event CharityBadgeEarned(address indexed user);
-    event CharityAdded(uint256 indexed charityId, address charityAddress, bytes32 name, bytes32 descriptionHash);
+    event CharityAdded(uint256 indexed charityId, address charityAddress, string name, string metadataURI);
     event CharityRemoved(uint256 indexed charityId);
     event FavoriteAdded(address indexed user, address recipient, bytes32 name);
     event FavoriteRemoved(address indexed user, address recipient);
@@ -67,12 +67,14 @@ contract GiftManager is ReentrancyGuard, Ownable {
         badgeNFT = BadgeNFT(_badgeNFT);
     }
 
-    function addCharity(address charityAddress, bytes32 name, bytes32 descriptionHash) external onlyOwner {
+    function addCharity(address charityAddress, string memory name, string memory metadataURI) external onlyOwner {
         require(charityAddress != address(0), "Invalid charity address");
+        require(bytes(name).length > 0, "Name cannot be empty");
+        require(bytes(metadataURI).length > 0, "Metadata URI cannot be empty");
         charityCounter++;
-        charities[charityCounter] = Charity(charityAddress, name, descriptionHash, true);
+        charities[charityCounter] = Charity(charityAddress, name, metadataURI, true);
         isActiveCharity[charityAddress] = true;
-        emit CharityAdded(charityCounter, charityAddress, name, descriptionHash);
+        emit CharityAdded(charityCounter, charityAddress, name, metadataURI);
     }
 
     function removeCharity(uint256 charityId) external onlyOwner {
@@ -80,6 +82,35 @@ contract GiftManager is ReentrancyGuard, Ownable {
         charities[charityId].active = false;
         isActiveCharity[charities[charityId].charityAddress] = false;
         emit CharityRemoved(charityId);
+    }
+
+    function getCharity(uint256 charityId)
+        external
+        view
+        returns (address charityAddress, string memory name, string memory metadataURI, bool active)
+    {
+        Charity memory charity = charities[charityId];
+        return (charity.charityAddress, charity.name, charity.metadataURI, charity.active);
+    }
+
+    function getAllActiveCharities() external view returns (uint256[] memory) {
+        uint256 activeCount = 0;
+        for (uint256 i = 1; i <= charityCounter; i++) {
+            if (charities[i].active) {
+                activeCount++;
+            }
+        }
+
+        uint256[] memory activeCharities = new uint256[](activeCount);
+        uint256 index = 0;
+        for (uint256 i = 1; i <= charityCounter; i++) {
+            if (charities[i].active) {
+                activeCharities[index] = i;
+                index++;
+            }
+        }
+
+        return activeCharities;
     }
 
     function addFavorite(address recipient, bytes32 name) external {
@@ -235,8 +266,8 @@ contract GiftManager is ReentrancyGuard, Ownable {
         returns (
             uint256[] memory ids,
             address[] memory addresses,
-            bytes32[] memory names,
-            bytes32[] memory descriptionHashes
+            string[] memory names,
+            string[] memory metadataURIs
         )
     {
         uint256 activeCount = 0;
@@ -245,15 +276,15 @@ contract GiftManager is ReentrancyGuard, Ownable {
         }
         ids = new uint256[](activeCount);
         addresses = new address[](activeCount);
-        names = new bytes32[](activeCount);
-        descriptionHashes = new bytes32[](activeCount);
+        names = new string[](activeCount);
+        metadataURIs = new string[](activeCount);
         uint256 index = 0;
         for (uint256 i = 1; i <= charityCounter; i++) {
             if (charities[i].active) {
                 ids[index] = i;
                 addresses[index] = charities[i].charityAddress;
                 names[index] = charities[i].name;
-                descriptionHashes[index] = charities[i].descriptionHash;
+                metadataURIs[index] = charities[i].metadataURI;
                 index++;
             }
         }

@@ -113,7 +113,8 @@ export default function SendGiftForm() {
         address: CONTRACTS.GIFT_MANAGER,
         abi: (await import('@/abi/GiftManager.json')).default,
         functionName: 'sendGift',
-        args: [recipient, amountToSend, giftTypeHash, messageHash, isCharity]
+        args: [recipient, amountToSend, giftTypeHash, messageHash, isCharity],
+        gas: 500000n // Adding explicit gas limit
       })
       
       // Store gift details and show modal with the known gift ID
@@ -147,7 +148,19 @@ export default function SendGiftForm() {
       console.error('Transaction failed:', error)
       const err = error as { shortMessage?: string; message?: string }
       const errorMessage = err?.shortMessage || err?.message || 'Transaction failed'
-      toast.error(errorMessage)
+      
+      // Check if it's a user rejection or gas error
+      if (errorMessage.toLowerCase().includes('user rejected') || 
+          errorMessage.toLowerCase().includes('cancelled') ||
+          errorMessage.toLowerCase().includes('gas')) {
+        toast.info('Transaction cancelled')
+      } else {
+        toast.error(errorMessage)
+      }
+
+      // Close modal if there's an error
+      setShowSuccessModal(false)
+      setCurrentGiftDetails(undefined)
     } finally {
       setIsLoading(false)
     }

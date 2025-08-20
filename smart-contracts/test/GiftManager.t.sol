@@ -57,7 +57,7 @@ contract GiftManagerTest is Test {
     }
 
     function testAddCharity() public {
-        giftManager.addCharity(charity, keccak256("Mantle Aid"), keccak256("desc"));
+        giftManager.addCharity(charity, "Mantle Aid", "QmTestHash123");
         (address addr,,,) = giftManager.charities(1);
         assertEq(addr, charity);
         assertTrue(giftManager.isActiveCharity(charity));
@@ -105,7 +105,7 @@ contract GiftManagerTest is Test {
 
     function testCharityGifts() public {
         // Add charity first
-        giftManager.addCharity(charity, keccak256("Mantle Aid"), keccak256("desc"));
+        giftManager.addCharity(charity, "Mantle Aid", "QmTestHash123");
 
         // Send gift to charity
         vm.prank(user1);
@@ -127,7 +127,7 @@ contract GiftManagerTest is Test {
     }
 
     function testRemoveCharity() public {
-        giftManager.addCharity(charity, keccak256("Mantle Aid"), keccak256("desc"));
+        giftManager.addCharity(charity, "Mantle Aid", "QmTestHash123");
         assertTrue(giftManager.isActiveCharity(charity));
 
         giftManager.removeCharity(1);
@@ -235,14 +235,14 @@ contract GiftManagerTest is Test {
 
     function testGetCharities() public {
         // Add multiple charities
-        giftManager.addCharity(charity, keccak256("Mantle Aid"), keccak256("desc1"));
-        giftManager.addCharity(user2, keccak256("Crypto Charity"), keccak256("desc2"));
-        giftManager.addCharity(user1, keccak256("Tech Fund"), keccak256("desc3"));
+        giftManager.addCharity(charity, "Mantle Aid", "QmTestHash1");
+        giftManager.addCharity(user2, "Crypto Charity", "QmTestHash2");
+        giftManager.addCharity(user1, "Tech Fund", "QmTestHash3");
 
         // Remove one charity
         giftManager.removeCharity(2);
 
-        (uint256[] memory ids, address[] memory addresses, bytes32[] memory names, bytes32[] memory descriptions) =
+        (uint256[] memory ids, address[] memory addresses, string[] memory names, string[] memory metadataURIs) =
             giftManager.getCharities();
 
         // Should return 2 active charities (1 and 3, since 2 was removed)
@@ -285,7 +285,7 @@ contract GiftManagerTest is Test {
 
     function test_RevertWhen_AddCharityInvalidAddress() public {
         vm.expectRevert("Invalid charity address");
-        giftManager.addCharity(address(0), keccak256("Invalid"), keccak256("desc"));
+        giftManager.addCharity(address(0), "Invalid", "QmTestHash");
     }
 
     function testTenGiftMilestone() public {
