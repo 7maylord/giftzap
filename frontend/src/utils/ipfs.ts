@@ -53,13 +53,74 @@ const getGatewayUrl = (cid: string): string => {
 
 export async function uploadToIPFS(data: unknown): Promise<string> {
   try {
-    const jsonData = JSON.stringify(data)
-    const file = new File([jsonData], 'metadata.json', { type: 'application/json' })
-
-    const result = await pinata.upload.file(file)
+    console.log('Uploading to IPFS:', data)
+    console.log('Pinata client available:', !!pinata)
     
-    console.log(`Uploaded to IPFS: ${result.IpfsHash}`)
-    return result.IpfsHash
+    if (!pinata) {
+      throw new Error('Pinata client not initialized - check PINATA_JWT environment variable')
+    }
+
+    const jsonData = JSON.stringify(data)
+    console.log('JSON data to upload:', jsonData)
+
+    // For Pinata SDK v2, try the correct method names
+    let result;
+    try {
+      // Method 1: Direct JSON upload
+      console.log('Trying pinata.upload with JSON object...')
+      result = await (pinata as any).upload.json(data)
+      console.log('JSON upload success:', result)
+    } catch (jsonError) {
+      console.warn('JSON upload failed, trying file upload:', jsonError)
+      try {
+        // Method 2: File upload  
+        const file = new File([jsonData], 'metadata.json', { type: 'application/json' })
+        console.log('Trying pinata.upload.file...')
+        result = await (pinata as any).upload.file(file)
+        console.log('File upload success:', result)
+      } catch (fileError) {
+        console.warn('File upload failed, trying direct API call:', fileError)
+        try {
+          // Method 3: Direct API call using fetch (fallback)
+          const formData = new FormData()
+          const blob = new Blob([jsonData], { type: 'application/json' })
+          formData.append('file', blob, 'metadata.json')
+          
+          const pinataMetadata = JSON.stringify({
+            name: 'charity-metadata.json'
+          })
+          formData.append('pinataMetadata', pinataMetadata)
+
+          const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${PINATA_JWT}`,
+            },
+            body: formData
+          })
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`)
+          }
+
+          result = await response.json()
+          console.log('Direct API upload success:', result)
+        } catch (apiError) {
+          console.error('All upload methods failed')
+          throw new Error(`All Pinata upload methods failed. Last error: ${apiError}`)
+        }
+      }
+    }
+    
+    // Handle different response formats
+    const ipfsHash = result.IpfsHash || result.ipfsHash || result.cid || result.hash
+    if (!ipfsHash) {
+      console.error('No IPFS hash in response:', result)
+      throw new Error('No IPFS hash returned from Pinata')
+    }
+    
+    console.log(`Uploaded to IPFS: ${ipfsHash}`)
+    return ipfsHash
   } catch (error) {
     console.error('IPFS upload failed:', error)
     throw new Error(`Failed to upload to IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`)

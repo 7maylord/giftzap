@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useWriteContract, useReadContract } from 'wagmi'
 import { CONTRACTS } from '@/lib/config'
-import { uploadCharityMetadata, fetchFromIPFS } from '@/utils/ipfs'
+import { uploadCharityMetadata } from '@/utils/ipfs'
 import GiftManagerABI from '@/abi/GiftManager.json'
 
 interface Charity {
@@ -55,7 +55,7 @@ export default function AdminPage() {
     functionName: 'getCharities'
   })
 
-  const isOwner = address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase()
+  const isOwner = address && contractOwner && typeof contractOwner === 'string' && address.toLowerCase() === contractOwner.toLowerCase()
 
   // Parse charity data from getCharities call (same as CharityList)
   useEffect(() => {
@@ -195,7 +195,7 @@ export default function AdminPage() {
           <p className="text-gray-600 mb-4">Only the contract owner can access this admin panel</p>
           <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
             <p>Your address: {address}</p>
-            <p>Contract owner: {contractOwner || 'Loading...'}</p>
+            <p>Contract owner: {typeof contractOwner === 'string' ? contractOwner : 'Loading...'}</p>
           </div>
         </div>
       </div>
