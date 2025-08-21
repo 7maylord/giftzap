@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { formatEther } from 'viem'
+import ConfettiAnimation from './ConfettiAnimation'
 
 interface GiftDetails {
   recipient: string
@@ -20,6 +21,7 @@ interface GiftSuccessModalProps {
 
 export default function GiftSuccessModal({ isOpen, onClose, giftDetails }: GiftSuccessModalProps) {
   const [isWaiting, setIsWaiting] = useState(true)
+  const [showConfetti, setShowConfetti] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
@@ -31,6 +33,9 @@ export default function GiftSuccessModal({ isOpen, onClose, giftDetails }: GiftS
 
       if (giftDetails.txHash) {
         setIsWaiting(true);
+        
+        // Trigger confetti immediately
+        setShowConfetti(true);
         
         // Wait for 2 seconds before showing sharing options
         const timer = setTimeout(() => {
@@ -44,6 +49,7 @@ export default function GiftSuccessModal({ isOpen, onClose, giftDetails }: GiftS
     // Reset state when modal closes
     if (!isOpen) {
       setIsWaiting(true);
+      setShowConfetti(false);
     }
   }, [isOpen, giftDetails, onClose])
 
@@ -147,6 +153,12 @@ Claim your gift here: ${claimLink}`
           )}
         </div>
       </div>
+      
+      <ConfettiAnimation 
+        trigger={showConfetti} 
+        onComplete={() => setShowConfetti(false)}
+        size={400}
+      />
     </div>
   )
 }

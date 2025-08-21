@@ -26,7 +26,7 @@ export default function SocialShare({
     ? `🎁 You've received a ${giftType || 'special'} gift${giftAmount ? ` of ${giftAmount} MNT` : ''}! "${message}" 💝`
     : `🎁 You've received a ${giftType || 'special'} gift${giftAmount ? ` of ${giftAmount} MNT` : ''}! 💝`
 
-  const fullShareText = `${shareText}\n\nRedeem your gift here: ${redeemUrl}\n\n#GiftZap #Crypto #Gift`
+  const fullShareText = `${shareText}\n\nRedeem your gift here: ${redeemUrl}\n\n#GiftZap #Mantle #Onchain #Gift`
 
   const handleTwitterShare = () => {
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullShareText)}`

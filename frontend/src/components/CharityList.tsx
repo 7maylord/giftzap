@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useGetCharities } from '@/hooks/useGiftManager'
 import { fetchFromIPFS } from '@/utils/ipfs'
 import { toast } from 'react-toastify'
+import AnimatedCard from './AnimatedCard'
 
 interface CharityMetadata {
   name: string
@@ -156,7 +157,8 @@ export default function CharityList() {
           }
           
           return (
-            <div key={index} className="border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
+            <AnimatedCard key={index} delay={index * 150}>
+              <div className="border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -227,7 +229,8 @@ export default function CharityList() {
                   {isLoadingMeta && <span>⏳ Loading metadata...</span>}
                 </div>
               </div>
-            </div>
+              </div>
+            </AnimatedCard>
           )
         })}
       </div>
