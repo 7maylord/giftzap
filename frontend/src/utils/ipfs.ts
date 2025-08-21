@@ -1,4 +1,4 @@
-import { create } from 'ipfs-http-client'
+import { PinataSDK } from 'pinata'
 
 interface GiftMetadata {
   giftType: string
@@ -18,53 +18,48 @@ interface CharityMetadata {
 const PINATA_JWT = process.env.NEXT_PUBLIC_PINATA_JWT
 const PINATA_GATEWAY = process.env.NEXT_PUBLIC_PINATA_GATEWAY
 
-// Create IPFS client for Pinata
-const createIPFSClient = () => {
+// Create Pinata client
+const createPinataClient = () => {
   if (!PINATA_JWT) {
     console.warn('PINATA_JWT not found in environment variables')
+    // Don't throw error, we'll use fallback
+    return null
   }
   console.log('Using Pinata IPFS service')
-  return create({
-    host: 'api.pinata.cloud',
-    port: 443,
-    protocol: 'https',
-    headers: {
-      Authorization: `Bearer ${PINATA_JWT}`,
-    },
-  })
+  try {
+    return new PinataSDK({
+      pinataJwt: PINATA_JWT,
+      pinataGateway: PINATA_GATEWAY || 'gateway.pinata.cloud'
+    })
+  } catch (error) {
+    console.error('Failed to create Pinata client:', error)
+    return null
+  }
 }
 
-const ipfs = createIPFSClient()
+const pinata = createPinataClient()
 
 // Get appropriate gateway URL
 const getGatewayUrl = (cid: string): string => {
+  // Use your custom Pinata gateway
+  const customGateway = 'https://gold-perfect-rook-553.mypinata.cloud/ipfs'
+  
   if (PINATA_GATEWAY) {
     return `${PINATA_GATEWAY}/ipfs/${cid}`
   } else {
-    return `https://gateway.pinata.cloud/ipfs/${cid}`
+    return `${customGateway}/${cid}`
   }
 }
 
 export async function uploadToIPFS(data: unknown): Promise<string> {
   try {
-    if (!PINATA_JWT) {
-      throw new Error('Pinata JWT not configured')
-    }
-
     const jsonData = JSON.stringify(data)
-    const blob = new Blob([jsonData], { type: 'application/json' })
+    const file = new File([jsonData], 'metadata.json', { type: 'application/json' })
+
+    const result = await pinata.upload.file(file)
     
-    // Convert blob to buffer
-    const arrayBuffer = await blob.arrayBuffer()
-    const buffer = new Uint8Array(arrayBuffer)
-
-    const result = await ipfs.add(buffer, {
-      pin: true,
-      wrapWithDirectory: false,
-    })
-
-    console.log(`Uploaded to IPFS: ${result.cid.toString()}`)
-    return result.cid.toString()
+    console.log(`Uploaded to IPFS: ${result.IpfsHash}`)
+    return result.IpfsHash
   } catch (error) {
     console.error('IPFS upload failed:', error)
     throw new Error(`Failed to upload to IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -86,18 +81,59 @@ export async function uploadCharityMetadata(charityData: CharityMetadata): Promi
 
 export async function fetchFromIPFS(cid: string): Promise<unknown> {
   try {
-    const url = getGatewayUrl(cid)
-    console.log(`Fetching from IPFS: ${url}`)
+    console.log('Fetching from IPFS with CID:', cid)
+    console.log('Environment check - PINATA_JWT exists:', !!PINATA_JWT)
+    console.log('Environment check - PINATA_GATEWAY:', PINATA_GATEWAY)
+    console.log('Pinata client initialized:', !!pinata)
     
-    const response = await fetch(url)
+    // Use direct gateway fetch as primary method since it's more reliable
+    const gatewayUrl = getGatewayUrl(cid)
+    console.log('Fetching directly from gateway:', gatewayUrl)
+    
+    const response = await fetch(gatewayUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    })
+    
+    console.log('Response status:', response.status)
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`)
     }
     
-    return await response.json()
+    const data = await response.json()
+    console.log('Direct fetch response:', data)
+    return data
+    
   } catch (error) {
     console.error('IPFS fetch failed:', error)
+    
+    // Try alternative gateways as fallback
+    const alternativeGateways = [
+      `https://gold-perfect-rook-553.mypinata.cloud/ipfs/${cid}`,
+      `https://gateway.pinata.cloud/ipfs/${cid}`,
+      `https://ipfs.io/ipfs/${cid}`,
+      `https://cloudflare-ipfs.com/ipfs/${cid}`,
+      `https://dweb.link/ipfs/${cid}`
+    ]
+    
+    for (const gatewayUrl of alternativeGateways) {
+      try {
+        console.log('Trying alternative gateway:', gatewayUrl)
+        const response = await fetch(gatewayUrl)
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Alternative gateway success:', data)
+          return data
+        }
+      } catch (altError) {
+        console.warn('Alternative gateway failed:', gatewayUrl, altError)
+      }
+    }
+    
     throw new Error(`Failed to fetch from IPFS: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }

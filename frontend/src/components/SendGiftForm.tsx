@@ -9,6 +9,8 @@ import { useGetCharities } from '@/hooks/useGiftManager'
 import { CONTRACTS } from '@/lib/config'
 import { toast } from 'react-toastify'
 import GiftSuccessModal from './GiftSuccessModal'
+import MockMNTABI from '@/abi/MockMNT.json'
+import GiftManagerABI from '@/abi/GiftManager.json'
 
 export default function SendGiftForm() {
   const { address } = useAccount()
@@ -40,7 +42,7 @@ export default function SendGiftForm() {
     ids: charitiesData[0] as bigint[],
     addresses: charitiesData[1] as string[],
     names: charitiesData[2] as string[],
-    descriptions: charitiesData[3] as string[]
+    metadataURIs: charitiesData[3] as string[]
   } : null
 
 
@@ -96,7 +98,7 @@ export default function SendGiftForm() {
         // First approve the tokens
         await writeMNT({
           address: CONTRACTS.MOCK_MNT,
-          abi: (await import('@/abi/MockMNT.json')).default,
+          abi: MockMNTABI,
           functionName: 'approve',
           args: [CONTRACTS.GIFT_MANAGER, amountToSend]
         })
@@ -111,7 +113,7 @@ export default function SendGiftForm() {
       
       const txResult = await writeGiftManager({
         address: CONTRACTS.GIFT_MANAGER,
-        abi: (await import('@/abi/GiftManager.json')).default,
+        abi: GiftManagerABI,
         functionName: 'sendGift',
         args: [recipient, amountToSend, giftTypeHash, messageHash, isCharity],
         gas: 500000n // Adding explicit gas limit
@@ -178,7 +180,7 @@ export default function SendGiftForm() {
       
       await writeMNT({
         address: CONTRACTS.MOCK_MNT,
-        abi: (await import('@/abi/MockMNT.json')).default,
+        abi: MockMNTABI,
         functionName: 'mint',
         args: [address, parseEther('1000')]
       })

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useAccount, useWriteContract, useReadContract } from 'wagmi'
 import { CONTRACTS } from '@/lib/config'
-import { uploadCharityMetadata } from '@/utils/ipfs'
+import { uploadCharityMetadata, fetchFromIPFS } from '@/utils/ipfs'
+import GiftManagerABI from '@/abi/GiftManager.json'
 
 interface Charity {
   id: number
@@ -20,48 +21,6 @@ interface CharityMetadata {
   website?: string
 }
 
-const GIFT_MANAGER_ABI = [
-  {
-    "inputs": [{"name": "charityAddress", "type": "address"}, {"name": "name", "type": "string"}, {"name": "metadataURI", "type": "string"}],
-    "name": "addCharity",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"name": "charityId", "type": "uint256"}],
-    "name": "removeCharity", 
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getAllActiveCharities",
-    "outputs": [{"name": "", "type": "uint256[]"}],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"name": "charityId", "type": "uint256"}],
-    "name": "getCharity",
-    "outputs": [
-      {"name": "charityAddress", "type": "address"},
-      {"name": "name", "type": "string"}, 
-      {"name": "metadataURI", "type": "string"},
-      {"name": "active", "type": "bool"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [{"name": "", "type": "address"}],
-    "stateMutability": "view",
-    "type": "function"
-  }
-]
 
 export default function AdminPage() {
   const { address } = useAccount()
@@ -85,51 +44,51 @@ export default function AdminPage() {
   // Check if user is owner
   const { data: contractOwner } = useReadContract({
     address: CONTRACTS.GIFT_MANAGER,
-    abi: GIFT_MANAGER_ABI,
+    abi: GiftManagerABI,
     functionName: 'owner'
   })
 
-  // Get all active charities
-  const { data: activeCharityIds, refetch: refetchCharities } = useReadContract({
+  // Get all charities (same as CharityList component)
+  const { data: charitiesData, refetch: refetchCharities } = useReadContract({
     address: CONTRACTS.GIFT_MANAGER,
-    abi: GIFT_MANAGER_ABI,
-    functionName: 'getAllActiveCharities'
+    abi: GiftManagerABI,
+    functionName: 'getCharities'
   })
 
   const isOwner = address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase()
 
-  // Fetch charity details
+  // Parse charity data from getCharities call (same as CharityList)
   useEffect(() => {
-    const fetchCharityDetails = async () => {
-      if (!activeCharityIds || activeCharityIds.length === 0) {
-        setCharities([])
-        return
+    if (charitiesData && Array.isArray(charitiesData)) {
+      const parsedCharities = {
+        ids: charitiesData[0] as bigint[],
+        addresses: charitiesData[1] as string[],
+        names: charitiesData[2] as string[],
+        metadataURIs: charitiesData[3] as string[]
       }
 
+      console.log('Admin - Raw charity data:', parsedCharities)
+
+      const formattedCharities: Charity[] = parsedCharities.addresses.map((address, index) => ({
+        id: Number(parsedCharities.ids[index]),
+        address: address,
+        name: parsedCharities.names[index] || `Charity #${Number(parsedCharities.ids[index])}`,
+        metadataURI: parsedCharities.metadataURIs[index] || '',
+        active: true
+      }))
+
+      console.log('Admin - Formatted charities:', formattedCharities)
+      setCharities(formattedCharities)
+      setIsLoading(false)
+    } else if (charitiesData === null || charitiesData === undefined) {
+      // Still loading
       setIsLoading(true)
-      try {
-        const charityPromises = activeCharityIds.map(async (id: bigint) => {
-          return {
-            id: Number(id),
-            address: '0x...',
-            name: 'Loading...',
-            metadataURI: '',
-            active: true
-          }
-        })
-
-        const charitiesData = await Promise.all(charityPromises)
-        setCharities(charitiesData)
-      } catch (err) {
-        setError('Failed to fetch charity details')
-        console.error(err)
-      } finally {
-        setIsLoading(false)
-      }
+    } else {
+      // Empty or invalid data
+      setCharities([])
+      setIsLoading(false)
     }
-
-    fetchCharityDetails()
-  }, [activeCharityIds])
+  }, [charitiesData])
 
   const handleAddCharity = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -156,7 +115,7 @@ export default function AdminPage() {
       // Add charity to smart contract
       addCharity({
         address: CONTRACTS.GIFT_MANAGER,
-        abi: GIFT_MANAGER_ABI,
+        abi: GiftManagerABI,
         functionName: 'addCharity',
         args: [newCharity.walletAddress as `0x${string}`, newCharity.name, ipfsHash]
       }, {
@@ -191,7 +150,7 @@ export default function AdminPage() {
 
     removeCharity({
       address: CONTRACTS.GIFT_MANAGER,
-      abi: GIFT_MANAGER_ABI,
+      abi: GiftManagerABI,
       functionName: 'removeCharity',
       args: [BigInt(charityId)]
     }, {
@@ -203,6 +162,18 @@ export default function AdminPage() {
         setError(`Failed to remove charity: ${error.message}`)
       }
     })
+  }
+
+  // Function to copy address to clipboard
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setSuccess('Address copied to clipboard!')
+      setTimeout(() => setSuccess(null), 2000) // Clear success message after 2 seconds
+    } catch (error) {
+      console.error('Failed to copy:', error)
+      setError('Failed to copy address')
+    }
   }
 
   if (!address) {
@@ -254,13 +225,13 @@ export default function AdminPage() {
 
       {/* Add New Charity Form */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">➕ Add New Charity</h2>
-        <p className="text-gray-600 mb-6">Create a new charity that users can donate to. Metadata will be uploaded to IPFS.</p>
+        <h2 className="text-xl text-black font-semibold mb-4">➕ Add New Charity</h2>
+        <p className="text-black mb-6">Create a new charity that users can donate to. Metadata will be uploaded to IPFS.</p>
         
         <form onSubmit={handleAddCharity} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-black mb-1">
                 Charity Name *
               </label>
               <input
@@ -345,7 +316,7 @@ export default function AdminPage() {
 
       {/* Existing Charities */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">Active Charities</h2>
+        <h2 className="text-xl text-black font-semibold mb-4">Active Charities</h2>
         <p className="text-gray-600 mb-6">Manage existing charities on the platform</p>
         
         {isLoading ? (
@@ -358,9 +329,31 @@ export default function AdminPage() {
           <div className="space-y-4">
             {charities.map((charity) => (
               <div key={charity.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h3 className="font-medium">{charity.name}</h3>
-                  <p className="text-sm text-gray-600">{charity.address}</p>
+                <div className="flex-1">
+                  <h3 className="font-medium text-black mb-1">{charity.name}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className="text-sm text-gray-600 font-mono">
+                      {charity.address === 'Loading...' ? charity.address : 
+                       `${charity.address.slice(0, 6)}...${charity.address.slice(-4)}`}
+                    </p>
+                    {charity.address !== 'Loading...' && charity.address !== 'Error' && (
+                      <button
+                        onClick={() => copyToClipboard(charity.address)}
+                        className="p-1 rounded hover:bg-gray-100 transition-colors"
+                        title="Copy full address"
+                      >
+                        <svg 
+                          fill="#6b7280" 
+                          viewBox="0 0 24 24" 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="w-4 h-4 hover:fill-gray-700"
+                        >
+                          <path d="M16,22H6a2,2,0,0,1-2-2V6A1,1,0,0,1,6,6V20H16a1,1,0,0,1,0,2Z" style={{fill: '#2ca9bc'}} />
+                          <path d="M19.71,5.29l-3-3A1.05,1.05,0,0,0,16,2H9A1,1,0,0,0,8,3V17a1,1,0,0,0,1,1H19a1,1,0,0,0,1-1V6A1,1,0,0,0,19.71,5.29Z" style={{fill: '#374151'}} />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
                   {charity.metadataURI && (
                     <a
                       href={`https://gateway.pinata.cloud/ipfs/${charity.metadataURI}`}
@@ -368,9 +361,10 @@ export default function AdminPage() {
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 hover:underline"
                     >
-                      View Metadata 🔗
+                      🔗 View Metadata
                     </a>
                   )}
+                  <p className="text-xs text-gray-500 mt-1">ID: {charity.id}</p>
                 </div>
                 <button
                   onClick={() => handleRemoveCharity(charity.id)}

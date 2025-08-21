@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { formatEther } from 'viem'
 import { useGiftManagerRead, useGiftManagerWrite } from '@/hooks/useGiftManager'
+import { CONTRACTS } from '@/lib/config'
+import GiftManagerABI from '@/abi/GiftManager.json'
 
 interface Gift {
   id: number
@@ -54,8 +56,8 @@ export default function GiftHistory() {
   const handleRedeem = async (giftId: number) => {
     try {
       await writeContract({
-        address: '0xcA3f02A32C333e4fc00E3Bd91C648e7deAb5d9eB',
-        abi: (await import('@/abi/GiftManager.json')).default,
+        address: CONTRACTS.GIFT_MANAGER,
+        abi: GiftManagerABI,
         functionName: 'redeemGift',
         args: [giftId]
       })

@@ -16,7 +16,17 @@ export function useGiftManagerWrite() {
 }
 
 export function useGetCharities() {
-  return useGiftManagerRead('getCharities')
+  const result = useGiftManagerRead('getCharities')
+  
+  // Add console logs to debug charity fetching
+  console.log('useGetCharities result:', {
+    data: result.data,
+    isLoading: result.isLoading,
+    error: result.error,
+    status: result.status
+  })
+  
+  return result
 }
 
 export function useGetFavorites(userAddress?: string) {
