@@ -73,6 +73,11 @@ export default function SendGiftForm() {
       return
     }
     
+    if (isCharity && !charities?.addresses.includes(recipient)) {
+      toast.error('Please select a valid charity')
+      return
+    }
+    
     if (balance && parseEther(amount) > balance) {
       toast.error('Insufficient balance')
       return
@@ -89,21 +94,30 @@ export default function SendGiftForm() {
       currentCounter = counterResult.data ? Number(counterResult.data) : 0
       const nextGiftId = currentCounter + 1
       
+      // Ensure modal is closed at start of new transaction
+      setShowSuccessModal(false)
+      setCurrentGiftDetails(undefined)
       setIsLoading(true)
       
       // Check if approval is needed
       if (allowance !== undefined && amountToSend > allowance) {
         toast.info('Step 1: Approve tokens. Please confirm the approval transaction in your wallet.')
         
-        // First approve the tokens
-        await writeMNT({
+        // First approve the tokens and wait for confirmation
+        const approvalTx = await writeMNT({
           address: CONTRACTS.MOCK_MNT,
           abi: MockMNTABI,
           functionName: 'approve',
           args: [CONTRACTS.GIFT_MANAGER, amountToSend]
         })
         
-        toast.success('✅ Token approval confirmed!')
+        // Wait a moment for the transaction to be confirmed
+        if (approvalTx) {
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          toast.success('✅ Token approval confirmed!')
+        } else {
+          throw new Error('Token approval failed - no transaction hash returned')
+        }
       }
       
       toast.info('Step 2: Send gift. Please confirm the gift transaction in your wallet.')
@@ -115,8 +129,7 @@ export default function SendGiftForm() {
         address: CONTRACTS.GIFT_MANAGER,
         abi: GiftManagerABI,
         functionName: 'sendGift',
-        args: [recipient, amountToSend, giftTypeHash, messageHash, isCharity],
-        gas: 500000n // Adding explicit gas limit
+        args: [recipient, amountToSend, giftTypeHash, messageHash, isCharity]
       })
       
       // Store gift details and show modal with the known gift ID
@@ -129,7 +142,6 @@ export default function SendGiftForm() {
         giftId: nextGiftId.toString()
       }
       
-      console.log('Gift Details:', giftDetails) // Debug log
       
       // Update success state first
       setCurrentGiftDetails(giftDetails)

@@ -263,12 +263,7 @@ contract GiftManager is ReentrancyGuard, Ownable {
     function getCharities()
         external
         view
-        returns (
-            uint256[] memory ids,
-            address[] memory addresses,
-            string[] memory names,
-            string[] memory metadataURIs
-        )
+        returns (uint256[] memory ids, address[] memory addresses, string[] memory names, string[] memory metadataURIs)
     {
         uint256 activeCount = 0;
         for (uint256 i = 1; i <= charityCounter; i++) {

@@ -53,33 +53,23 @@ const getGatewayUrl = (cid: string): string => {
 
 export async function uploadToIPFS(data: unknown): Promise<string> {
   try {
-    console.log('Uploading to IPFS:', data)
-    console.log('Pinata client available:', !!pinata)
-    
     if (!pinata) {
       throw new Error('Pinata client not initialized - check PINATA_JWT environment variable')
     }
 
     const jsonData = JSON.stringify(data)
-    console.log('JSON data to upload:', jsonData)
 
     // For Pinata SDK v2, try the correct method names
     let result;
     try {
       // Method 1: Direct JSON upload
-      console.log('Trying pinata.upload with JSON object...')
       result = await (pinata as any).upload.json(data)
-      console.log('JSON upload success:', result)
     } catch (jsonError) {
-      console.warn('JSON upload failed, trying file upload:', jsonError)
       try {
         // Method 2: File upload  
         const file = new File([jsonData], 'metadata.json', { type: 'application/json' })
-        console.log('Trying pinata.upload.file...')
         result = await (pinata as any).upload.file(file)
-        console.log('File upload success:', result)
       } catch (fileError) {
-        console.warn('File upload failed, trying direct API call:', fileError)
         try {
           // Method 3: Direct API call using fetch (fallback)
           const formData = new FormData()
@@ -104,9 +94,7 @@ export async function uploadToIPFS(data: unknown): Promise<string> {
           }
 
           result = await response.json()
-          console.log('Direct API upload success:', result)
         } catch (apiError) {
-          console.error('All upload methods failed')
           throw new Error(`All Pinata upload methods failed. Last error: ${apiError}`)
         }
       }
@@ -115,11 +103,9 @@ export async function uploadToIPFS(data: unknown): Promise<string> {
     // Handle different response formats
     const ipfsHash = result.IpfsHash || result.ipfsHash || result.cid || result.hash
     if (!ipfsHash) {
-      console.error('No IPFS hash in response:', result)
       throw new Error('No IPFS hash returned from Pinata')
     }
     
-    console.log(`Uploaded to IPFS: ${ipfsHash}`)
     return ipfsHash
   } catch (error) {
     console.error('IPFS upload failed:', error)
@@ -142,14 +128,8 @@ export async function uploadCharityMetadata(charityData: CharityMetadata): Promi
 
 export async function fetchFromIPFS(cid: string): Promise<unknown> {
   try {
-    console.log('Fetching from IPFS with CID:', cid)
-    console.log('Environment check - PINATA_JWT exists:', !!PINATA_JWT)
-    console.log('Environment check - PINATA_GATEWAY:', PINATA_GATEWAY)
-    console.log('Pinata client initialized:', !!pinata)
-    
     // Use direct gateway fetch as primary method since it's more reliable
     const gatewayUrl = getGatewayUrl(cid)
-    console.log('Fetching directly from gateway:', gatewayUrl)
     
     const response = await fetch(gatewayUrl, {
       method: 'GET',
@@ -158,20 +138,14 @@ export async function fetchFromIPFS(cid: string): Promise<unknown> {
       },
     })
     
-    console.log('Response status:', response.status)
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()))
-    
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status} - ${response.statusText}`)
     }
     
     const data = await response.json()
-    console.log('Direct fetch response:', data)
     return data
     
   } catch (error) {
-    console.error('IPFS fetch failed:', error)
-    
     // Try alternative gateways as fallback
     const alternativeGateways = [
       `https://gold-perfect-rook-553.mypinata.cloud/ipfs/${cid}`,
@@ -183,15 +157,13 @@ export async function fetchFromIPFS(cid: string): Promise<unknown> {
     
     for (const gatewayUrl of alternativeGateways) {
       try {
-        console.log('Trying alternative gateway:', gatewayUrl)
         const response = await fetch(gatewayUrl)
         if (response.ok) {
           const data = await response.json()
-          console.log('Alternative gateway success:', data)
           return data
         }
       } catch (altError) {
-        console.warn('Alternative gateway failed:', gatewayUrl, altError)
+        // Silent fail, try next gateway
       }
     }
     

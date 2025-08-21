@@ -27,22 +27,16 @@ export default function CharityList() {
     setLoadingMetadata(prev => ({ ...prev, [metadataURI]: true }))
     
     try {
-      console.log('Fetching metadata for URI:', metadataURI)
-      
       // Clean the IPFS hash - remove any prefixes like ipfs://
       let cleanHash = metadataURI
       if (metadataURI.startsWith('ipfs://')) {
         cleanHash = metadataURI.replace('ipfs://', '')
       }
       
-      console.log('Clean hash:', cleanHash)
-      
       const metadata = await fetchFromIPFS(cleanHash) as CharityMetadata
-      console.log('Fetched metadata:', metadata)
-      
       setCharityMetadata(prev => ({ ...prev, [metadataURI]: metadata }))
     } catch (error) {
-      console.error('Failed to fetch charity metadata:', error, 'for URI:', metadataURI)
+      console.error('Failed to fetch charity metadata:', error)
       // Set an error state for this metadata
       setCharityMetadata(prev => ({ 
         ...prev, 
@@ -72,14 +66,6 @@ export default function CharityList() {
     setBrokenImages(prev => new Set([...prev, imageUrl]))
   }
 
-  // Debug logs for raw contract data
-  console.log('CharityList - Raw contract data:', {
-    data,
-    isLoading,
-    error,
-    dataType: typeof data,
-    isArray: Array.isArray(data)
-  })
 
   const charities = data && Array.isArray(data) ? {
     ids: data[0] as bigint[],
@@ -88,31 +74,15 @@ export default function CharityList() {
     metadataURIs: data[3] as string[]
   } : null
 
-  // Debug logs for parsed charity data
-  if (charities) {
-    console.log('CharityList - Parsed charity data:', {
-      totalCharities: charities.addresses.length,
-      ids: charities.ids,
-      addresses: charities.addresses,
-      names: charities.names,
-      metadataURIs: charities.metadataURIs
-    })
-  }
 
   // Fetch metadata for all charities when data is available
   useEffect(() => {
     if (charities?.metadataURIs) {
-      console.log('useEffect triggered - fetching metadata for URIs:', charities.metadataURIs)
-      charities.metadataURIs.forEach((uri, index) => {
+      charities.metadataURIs.forEach(uri => {
         if (uri && uri.trim()) {
-          console.log(`Triggering fetch for charity ${index} with URI:`, uri)
           fetchCharityMetadata(uri)
-        } else {
-          console.log(`Skipping fetch for charity ${index} - empty URI:`, uri)
         }
       })
-    } else {
-      console.log('useEffect - no metadataURIs available:', charities)
     }
   }, [charities?.metadataURIs])
 
@@ -151,16 +121,6 @@ export default function CharityList() {
           const metadataURI = charities.metadataURIs[index]
           const metadata = charityMetadata[metadataURI]
           const isLoadingMeta = loadingMetadata[metadataURI]
-          
-          // Debug logs for individual charity data
-          console.log(`CharityList - Charity ${index} raw data:`, {
-            index,
-            address,
-            rawName,
-            metadataURI,
-            metadata,
-            isLoadingMeta
-          })
           
           let displayName = 'Unknown Charity'
           let description = 'No description available'

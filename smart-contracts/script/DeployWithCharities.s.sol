@@ -21,33 +21,26 @@ contract DeployWithCharities is Script {
         );
         console.log("BadgeNFT deployed at:", address(badgeNFT));
 
-        GiftManager giftManager = new GiftManager(
-            address(mntToken),
-            address(badgeNFT)
-        );
+        GiftManager giftManager = new GiftManager(address(mntToken), address(badgeNFT));
         console.log("GiftManager deployed at:", address(giftManager));
 
         badgeNFT.grantRole(keccak256("MINTER_ROLE"), address(giftManager));
 
         giftManager.addCharity(
-            "0xbE3171d0e36a012319a5C76bCcD71250499b1C16",
+            address(0xbE3171d0e36a012319a5C76bCcD71250499b1C16),
             "Mantle Aid",
             "QmRypt7UoEBbpnzWX7vxrTmY9HF6JZaWujPXSHDkRtiLf5"
         );
         giftManager.addCharity(
-            "0x801ce3C86a4075F094C973D8Dd5e2bD5cde6a873",
+            address(0x801ce3C86a4075F094C973D8Dd5e2bD5cde6a873),
             "Crypto Charity",
             "QmQKwVEh9KcFT8MquCSNrW4et71DrVDQpKwFEfV9GzUCjh"
         );
 
         console.log("Deployment complete!");
         console.log("Next steps:");
-        console.log(
-            "1. Run: cd ../nft-asset && node upload-charities.js charities-example.json"
-        );
-        console.log(
-            "2. Update this script with the IPFS hashes from charity-config.json"
-        );
+        console.log("1. Run: cd ../nft-asset && node upload-charities.js charities-example.json");
+        console.log("2. Update this script with the IPFS hashes from charity-config.json");
         console.log("3. Redeploy to add charities");
 
         vm.stopBroadcast();

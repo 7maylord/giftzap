@@ -67,8 +67,6 @@ export default function AdminPage() {
         metadataURIs: charitiesData[3] as string[]
       }
 
-      console.log('Admin - Raw charity data:', parsedCharities)
-
       const formattedCharities: Charity[] = parsedCharities.addresses.map((address, index) => ({
         id: Number(parsedCharities.ids[index]),
         address: address,
@@ -76,8 +74,6 @@ export default function AdminPage() {
         metadataURI: parsedCharities.metadataURIs[index] || '',
         active: true
       }))
-
-      console.log('Admin - Formatted charities:', formattedCharities)
       setCharities(formattedCharities)
       setIsLoading(false)
     } else if (charitiesData === null || charitiesData === undefined) {
