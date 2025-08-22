@@ -6,13 +6,12 @@ import { fetchGiftMetadata } from '@/utils/ipfs'
 import { usePrivy } from '@privy-io/react-auth'
 import { CONTRACTS } from '@/lib/config'
 import GiftManagerABI from '@/abi/GiftManager.json'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Gift } from '@/lib/types'
 import { formatEther } from 'viem'
 import { toast } from 'react-toastify'
 import ConfettiAnimation from '@/components/ConfettiAnimation'
-import SocialShare from '@/components/SocialShare'
-import QRCodeGenerator from '@/components/QRCodeGenerator'
+import Link from 'next/link'
 
 interface GiftMetadata {
   giftType: string
@@ -29,8 +28,28 @@ export default function RedeemPage({ params }: { params: Promise<{ giftId: strin
   const [showConfetti, setShowConfetti] = useState(false)
   
   const { user, authenticated } = usePrivy()
-  const { data: gift, isLoading, error } = useGetGift(giftId) as { data: Gift | undefined, isLoading: boolean, error: unknown }
+  const { data: rawGift, isLoading, error } = useGetGift(giftId)
   const { writeContract } = useGiftManagerWrite()
+
+  // Transform raw gift data to proper Gift interface
+  const gift: Gift | undefined = useMemo(() => {
+    if (!rawGift) return undefined
+    
+    // Type the raw gift as tuple from smart contract
+    type RawGift = [string, string, bigint, string, string, boolean, boolean, bigint]
+    const typedRawGift = rawGift as RawGift
+    
+    return {
+      sender: typedRawGift[0] || '',
+      recipient: typedRawGift[1] || '',
+      amount: typedRawGift[2] || BigInt(0),
+      giftTypeHash: typedRawGift[3] || '',
+      messageHash: typedRawGift[4] || '',
+      isCharity: typedRawGift[5] || false,
+      redeemed: typedRawGift[6] || false,
+      timestamp: typedRawGift[7] || BigInt(0)
+    }
+  }, [rawGift])
 
   useEffect(() => {
     async function loadGiftMetadata() {
@@ -88,18 +107,18 @@ export default function RedeemPage({ params }: { params: Promise<{ giftId: strin
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-foreground">Loading gift...</p>
+          <p className="mt-4 text-black">Loading gift...</p>
         </div>
       </div>
     )
   }
 
-  if (error || !gift) {
+  if (error || !gift || !gift.amount) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Gift Not Found</h1>
-          <p className="text-secondary-foreground">This gift doesn&apos;t exist or has been removed.</p>
+          <h1 className="text-4xl font-bold text-black mb-4">Gift Not Found</h1>
+          <p className="text-black">This gift doesn&apos;t exist or has invalid data.</p>
         </div>
       </div>
     )
@@ -112,43 +131,45 @@ export default function RedeemPage({ params }: { params: Promise<{ giftId: strin
       <div className="container mx-auto px-4 max-w-2xl">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-secondary">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">🎁 You&apos;ve Received a Gift!</h1>
-            <p className="text-secondary-foreground">Someone special has sent you a gift</p>
+            <h1 className="text-4xl font-bold text-black mb-2">🎁 You&apos;ve Received a Gift!</h1>
+            <p className="text-black">Someone special has sent you a gift</p>
           </div>
 
           <div className="space-y-6">
             <div className="bg-secondary rounded-xl p-6">
-              <h2 className="text-xl font-semibold text-foreground mb-4">Gift Details</h2>
+              <h2 className="text-xl font-semibold text-black mb-4">Gift Details</h2>
               
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-secondary-foreground">Amount:</span>
-                  <span className="font-semibold text-foreground">{formatEther(gift.amount)} MNT</span>
+                  <span className="text-black">Amount:</span>
+                  <span className="font-semibold text-black">
+                    {formatEther(gift.amount)} MNT
+                  </span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-secondary-foreground">From:</span>
-                  <span className="font-mono text-sm text-foreground">
+                  <span className="text-black">From:</span>
+                  <span className="font-mono text-sm text-black">
                     {gift.sender.slice(0, 6)}...{gift.sender.slice(-4)}
                   </span>
                 </div>
                 
                 <div className="flex justify-between">
-                  <span className="text-secondary-foreground">To:</span>
-                  <span className="font-mono text-sm text-foreground">
+                  <span className="text-black">To:</span>
+                  <span className="font-mono text-sm text-black">
                     {gift.recipient.slice(0, 6)}...{gift.recipient.slice(-4)}
                   </span>
                 </div>
                 
                 {gift.isCharity && (
                   <div className="flex justify-between">
-                    <span className="text-secondary-foreground">Type:</span>
+                    <span className="text-black">Type:</span>
                     <span className="font-semibold text-green-600">Charity Donation</span>
                   </div>
                 )}
                 
                 <div className="flex justify-between">
-                  <span className="text-secondary-foreground">Status:</span>
+                  <span className="text-black">Status:</span>
                   <span className={`font-semibold ${gift.redeemed ? 'text-green-600' : 'text-yellow-600'}`}>
                     {gift.redeemed ? 'Redeemed' : 'Pending'}
                   </span>
@@ -158,18 +179,18 @@ export default function RedeemPage({ params }: { params: Promise<{ giftId: strin
 
             {giftMetadata && (
               <div className="bg-secondary rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-foreground mb-3">Personal Message</h3>
+                <h3 className="text-lg font-semibold text-black mb-3">Personal Message</h3>
                 <div className="space-y-2">
                   {giftMetadata.giftType && (
                     <div>
-                      <span className="text-secondary-foreground">Gift Type: </span>
-                      <span className="text-foreground font-medium">{giftMetadata.giftType}</span>
+                      <span className="text-black">Gift Type: </span>
+                      <span className="text-black font-medium">{giftMetadata.giftType}</span>
                     </div>
                   )}
                   {giftMetadata.message && (
                     <div>
-                      <span className="text-secondary-foreground">Message: </span>
-                      <p className="text-foreground italic mt-1">&quot;{giftMetadata.message}&quot;</p>
+                      <span className="text-black">Message: </span>
+                      <p className="text-black italic mt-1">&quot;{giftMetadata.message}&quot;</p>
                     </div>
                   )}
                 </div>
@@ -179,44 +200,28 @@ export default function RedeemPage({ params }: { params: Promise<{ giftId: strin
             <div className="text-center">
               {!authenticated ? (
                 <div>
-                  <p className="text-secondary-foreground mb-4">Connect your wallet to redeem this gift</p>
+                  <p className="text-black mb-4">Connect your wallet to redeem this gift</p>
                   <button className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
                     Connect Wallet
                   </button>
                 </div>
               ) : !isRecipient ? (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <p className="text-secondary-foreground mb-4">This gift is not for your wallet address</p>
-                    <p className="text-sm text-secondary-foreground mb-6">
-                      Make sure you&apos;re connected with the correct wallet, or share this gift with the intended recipient
-                    </p>
-                  </div>
-                  
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="bg-secondary rounded-xl p-4">
-                      <SocialShare 
-                        giftId={resolvedParams.giftId}
-                        giftAmount={formatEther(gift.amount)}
-                        giftType={giftMetadata?.giftType}
-                        message={giftMetadata?.message}
-                      />
-                    </div>
-                    
-                    <div className="bg-secondary rounded-xl p-4">
-                      <QRCodeGenerator
-                        value={`${typeof window !== 'undefined' ? window.location.origin : ''}/redeem/${resolvedParams.giftId}`}
-                        size={150}
-                        title="Scan to redeem gift"
-                        className="w-full"
-                      />
-                    </div>
-                  </div>
+                <div className="text-center space-y-4">
+                  <p className="text-red-600 font-semibold text-lg">This gift doesn&apos;t belong to you</p>
+                  <p className="text-black">
+                    This gift is intended for a different wallet address.
+                  </p>
+                  <Link
+                    href="/"
+                    className="inline-block bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-medium transition-colors"
+                  >
+                    Go to Homepage
+                  </Link>
                 </div>
               ) : gift.redeemed ? (
                 <div>
                   <p className="text-green-600 font-semibold mb-4">✅ This gift has been redeemed!</p>
-                  <p className="text-secondary-foreground">Thank you for using GiftZap</p>
+                  <p className="text-black">Thank you for using GiftZap</p>
                 </div>
               ) : (
                 <button
