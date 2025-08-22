@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/context/providers"
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+// Temporarily disabled due to network issues
+// const geistSans = Geist({
+//   variable: "--font-geist-sans",
+//   subsets: ["latin"],
+// });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
 
 export const metadata: Metadata = {
   title: "GiftZap - Send Gifts on Mantle",
@@ -28,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
       >
         <Providers>
           {children}
@@ -44,8 +45,6 @@ export default function RootLayout({
             pauseOnHover
             theme="light"
             toastClassName="!bg-white !text-gray-800 !shadow-lg !border !border-gray-200 !rounded-xl"
-            bodyClassName="!text-sm !font-medium"
-            progressClassName="!bg-gradient-to-r !from-primary !to-primary-light"
             toastStyle={{
               backgroundColor: 'white',
               color: '#171717',

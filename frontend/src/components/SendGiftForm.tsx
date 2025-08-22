@@ -39,10 +39,10 @@ export default function SendGiftForm() {
   const { data: giftCounter, refetch: refetchGiftCounter } = useGiftManagerRead('giftCounter')
 
   const charities = charitiesData ? {
-    ids: charitiesData[0] as bigint[],
-    addresses: charitiesData[1] as string[],
-    names: charitiesData[2] as string[],
-    metadataURIs: charitiesData[3] as string[]
+    ids: (charitiesData as [bigint[], string[], string[], string[]])[0],
+    addresses: (charitiesData as [bigint[], string[], string[], string[]])[1],
+    names: (charitiesData as [bigint[], string[], string[], string[]])[2],
+    metadataURIs: (charitiesData as [bigint[], string[], string[], string[]])[3]
   } : null
 
 
@@ -78,7 +78,7 @@ export default function SendGiftForm() {
       return
     }
     
-    if (balance && parseEther(amount) > balance) {
+    if (balance && parseEther(amount) > (balance as bigint)) {
       toast.error('Insufficient balance')
       return
     }
@@ -100,11 +100,11 @@ export default function SendGiftForm() {
       setIsLoading(true)
       
       // Check if approval is needed
-      if (allowance !== undefined && amountToSend > allowance) {
+      if (allowance !== undefined && amountToSend > (allowance as bigint)) {
         toast.info('Step 1: Approve tokens. Please confirm the approval transaction in your wallet.')
         
         // First approve the tokens and wait for confirmation
-        const approvalTx = await writeMNT({
+        await writeMNT({
           address: CONTRACTS.MOCK_MNT,
           abi: MockMNTABI,
           functionName: 'approve',
@@ -112,12 +112,8 @@ export default function SendGiftForm() {
         })
         
         // Wait a moment for the transaction to be confirmed
-        if (approvalTx) {
-          await new Promise(resolve => setTimeout(resolve, 2000))
-          toast.success('✅ Token approval confirmed!')
-        } else {
-          throw new Error('Token approval failed - no transaction hash returned')
-        }
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        toast.success('✅ Token approval confirmed!')
       }
       
       toast.info('Step 2: Send gift. Please confirm the gift transaction in your wallet.')

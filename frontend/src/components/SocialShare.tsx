@@ -108,7 +108,7 @@ export default function SocialShare({
         </button>
 
         {/* Native share API for mobile devices */}
-        {typeof navigator !== 'undefined' && navigator.share && (
+        {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
           <button
             onClick={handleNativeShare}
             className="flex items-center justify-center space-x-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-3 rounded-lg transition-colors"

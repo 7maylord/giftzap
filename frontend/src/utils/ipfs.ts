@@ -63,13 +63,15 @@ export async function uploadToIPFS(data: unknown): Promise<string> {
     let result;
     try {
       // Method 1: Direct JSON upload
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       result = await (pinata as any).upload.json(data)
-    } catch (jsonError) {
+    } catch {
       try {
         // Method 2: File upload  
         const file = new File([jsonData], 'metadata.json', { type: 'application/json' })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         result = await (pinata as any).upload.file(file)
-      } catch (fileError) {
+      } catch {
         try {
           // Method 3: Direct API call using fetch (fallback)
           const formData = new FormData()
@@ -94,8 +96,8 @@ export async function uploadToIPFS(data: unknown): Promise<string> {
           }
 
           result = await response.json()
-        } catch (apiError) {
-          throw new Error(`All Pinata upload methods failed. Last error: ${apiError}`)
+        } catch {
+          throw new Error(`All Pinata upload methods failed.`)
         }
       }
     }
@@ -162,7 +164,7 @@ export async function fetchFromIPFS(cid: string): Promise<unknown> {
           const data = await response.json()
           return data
         }
-      } catch (altError) {
+      } catch {
         // Silent fail, try next gateway
       }
     }

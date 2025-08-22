@@ -178,7 +178,7 @@ export default function GiftHistory() {
             <p>• Receive gifts from others</p>
             <p>• Track all your gift transactions</p>
           </div>
-          {giftCounter && (
+          {Number(giftCounter || 0) > 0 && (
             <p className="text-xs text-gray-400 mt-4">
               Total gifts in system: {Number(giftCounter)}
             </p>

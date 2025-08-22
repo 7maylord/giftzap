@@ -43,11 +43,14 @@ export default function FavoritesTable() {
   }
 
   // Parse favorites data
-  const favorites = favoritesData[0]?.map((recipient: string, index: number) => ({
+  type FavoritesDataType = [string[], string[], bigint[], bigint[]] | undefined
+  const typedFavoritesData = favoritesData as FavoritesDataType
+  
+  const favorites = typedFavoritesData?.[0]?.map((recipient: string, index: number) => ({
     recipient,
-    name: favoritesData[1]?.[index] || 'Unknown',
-    giftCount: Number(favoritesData[2]?.[index] || 0),
-    totalAmount: favoritesData[3]?.[index] || 0n
+    name: typedFavoritesData?.[1]?.[index] || 'Unknown',
+    giftCount: Number(typedFavoritesData?.[2]?.[index] || 0),
+    totalAmount: typedFavoritesData?.[3]?.[index] || BigInt(0)
   })) || []
 
   // Sort favorites

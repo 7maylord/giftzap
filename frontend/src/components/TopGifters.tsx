@@ -6,8 +6,8 @@ export default function TopGifters() {
   const { data, isLoading, error } = useGetTopGifters()
 
   const topGifters = data ? {
-    addresses: data[0] as string[],
-    counts: data[1] as bigint[]
+    addresses: (data as [string[], bigint[]])[0],
+    counts: (data as [string[], bigint[]])[1]
   } : null
 
   if (isLoading) {

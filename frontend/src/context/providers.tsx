@@ -26,9 +26,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           requireUserPasswordOnCreate: true,
         },
         externalWallets: {
-          metamask: true,
-          coinbaseWallet: true,
-          walletConnect: true,
+          coinbaseWallet: {},
+          walletConnect: { enabled: true },
         },
       }}
     >
