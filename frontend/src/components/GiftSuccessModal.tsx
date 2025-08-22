@@ -62,9 +62,6 @@ export default function GiftSuccessModal({ isOpen, onClose, giftDetails }: GiftS
     : ''
 
   const shareMessage = `🎁 I've sent ${giftDetails.twitterHandle ? `@${giftDetails.twitterHandle}` : 'you'} a gift on GiftZap! 
-Amount: ${formatEther(giftDetails.amount)} MNT
-Type: ${giftDetails.giftType}
-Message: ${giftDetails.message || ''}
 
 Claim your gift here: ${claimLink} #GiftZap #Mantle #Onchain #Gift`
 

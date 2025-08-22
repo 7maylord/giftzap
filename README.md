@@ -4,7 +4,6 @@
 
 GiftZap is a decentralized peer-to-peer micro-gifting platform built on Mantle Network L2 sepolia testnet, it allows uses to send MNT-based gifts with customizable messages, donate to charities, share gifts via X or whatsapp. The Platform awards ERC-721 Badge NFTs for milestones and charity donations. The frontend is built with Next.js (TypeScript), Privy for wallet authentication, Wagmi for contract interactions, Tailwind CSS v4 for styling, and Lottie for animations.
 
-
 ## ✨ Features
 
 ### 🎯 Core Functionality
@@ -64,13 +63,15 @@ git clone https://github.com/7maylord/giftzap.git
 cd giftzap
 ```
 
-2. **Setup Frontend**
+2. **Setup NFT Assets & Charity Management**
 ```bash
-cd frontend
+cd nft-asset
 yarn install
-cp .env.example 
-# Configure environment variables
-yarn run dev
+# Configure Pinata credentials in .env
+node upload.js
+
+# Upload charity metadata (optional)
+node upload-charities.js charities-example.json
 ```
 
 3. **Setup Smart Contracts**
@@ -83,15 +84,13 @@ forge test
 forge script script/DeployWithCharities.s.sol:DeployWithCharities --rpc-url mantle_sepolia --broadcast --verify 
 ```
 
-4. **Setup NFT Assets & Charity Management**
+4. **Setup Frontend**
 ```bash
-cd nft-asset
+cd frontend
 yarn install
-# Configure Pinata credentials in .env
-node upload.js
-
-# Upload charity metadata (optional)
-node upload-charities.js charities-example.json
+cp .env.sample
+# Configure environment variables
+yarn run dev
 ```
 
 ### Environment Variables
@@ -225,9 +224,7 @@ forge script script/Deploy.s.sol --rpc-url $RPC_URL --broadcast
 ```
 
 ### Testing
-- **Frontend**: Jest and React Testing Library
 - **Smart Contracts**: Foundry test suite
-- **Integration**: End-to-end testing with Playwright
 
 ## 🚀 Deployment
 
