@@ -84,17 +84,17 @@ Claim your gift here: ${claimLink}`
               <div className="mb-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
               </div>
-              <h3 className="text-lg text-gray-800 font-semibold mb-2">Processing Gift</h3>
-              <p className="text-gray-600">Please wait while we confirm your transaction...</p>
+              <h3 className="text-lg text-black font-semibold mb-2">Processing Gift</h3>
+              <p className="text-black">Please wait while we confirm your transaction...</p>
             </div>
           ) : (
             <div>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🎁</span>
-                  <h3 className="text-xl font-bold">Gift Sent Successfully!</h3>
+                  <h3 className="text-xl font-bold text-black">Gift Sent Successfully!</h3>
                 </div>
-                <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                <button onClick={onClose} className="text-gray-400 hover:text-black">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
@@ -105,29 +105,29 @@ Claim your gift here: ${claimLink}`
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Amount</p>
-                      <p className="font-semibold">{formatEther(giftDetails.amount)} MNT</p>
+                      <p className="text-sm text-black">Amount</p>
+                      <p className="font-semibold text-black">{formatEther(giftDetails.amount)} MNT</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Type</p>
-                      <p className="font-semibold">{giftDetails.giftType}</p>
+                      <p className="text-sm text-black">Type</p>
+                      <p className="font-semibold text-black">{giftDetails.giftType}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Message</p>
-                  <p className="font-medium">{giftDetails.message || 'No message'}</p>
+                  <p className="text-sm text-black mb-1">Message</p>
+                  <p className="font-medium text-black">{giftDetails.message || 'No message'}</p>
                 </div>
 
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Claim Link</p>
-                  <p className="font-mono text-sm break-all">{claimLink}</p>
+                  <p className="text-sm text-black mb-1">Claim Link</p>
+                  <p className="font-mono text-sm break-all text-black">{claimLink}</p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                <h4 className="font-semibold">Share Gift Link</h4>
+                <h4 className="font-semibold text-black">Share Gift Link</h4>
                 <div className="flex gap-3">
                   <button
                     onClick={shareToTwitter}

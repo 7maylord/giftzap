@@ -181,6 +181,9 @@ export default function SendGiftForm({
         args: [recipient, amountToSend, giftTypeHash, messageHash, isCharity]
       })
       
+      // Wait a moment for transaction to be processed
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       // Store gift details and show modal with the known gift ID
       const giftDetails = {
         recipient,
@@ -191,8 +194,7 @@ export default function SendGiftForm({
         giftId: nextGiftId.toString()
       }
       
-      
-      // Update success state first
+      // Update success state and show modal only after transaction completes
       setCurrentGiftDetails(giftDetails)
       setShowSuccessModal(true)
       
