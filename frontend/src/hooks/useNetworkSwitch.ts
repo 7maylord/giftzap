@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAccount, useSwitchChain, useChainId } from 'wagmi'
 import { mantleSepoliaTestnet } from 'wagmi/chains'
 import { toast } from 'react-toastify'
 import { rpcUrl } from '@/lib/config'
 
 export function useNetworkSwitch() {
-  const { address, isConnected } = useAccount()
+  const { address: _address, isConnected } = useAccount()
   const chainId = useChainId()
   const { switchChain, isPending, error } = useSwitchChain()
   const [hasPrompted, setHasPrompted] = useState(false)
@@ -15,7 +15,7 @@ export function useNetworkSwitch() {
   const isCorrectNetwork = chainId === mantleSepoliaTestnet.id
   const targetChainId = mantleSepoliaTestnet.id
 
-  const switchToMantleSepoliaTestnet = async () => {
+  const switchToMantleSepoliaTestnet = useCallback(async () => {
     if (!switchChain || isPending) return
 
     try {
@@ -37,9 +37,9 @@ export function useNetworkSwitch() {
       console.error('Failed to switch network:', err)
       toast.error('Failed to switch network. Please switch manually in your wallet.')
     }
-  }
+  }, [switchChain, isPending, targetChainId, setHasPrompted])
 
-  const promptNetworkSwitch = () => {
+  const promptNetworkSwitch = useCallback(() => {
     if (!isConnected || isCorrectNetwork || hasPrompted || isPending) return
 
     toast.warn('Wrong Network! Please switch to Mantle Sepolia Testnet to use this app.', {
@@ -49,7 +49,7 @@ export function useNetworkSwitch() {
         onClick: switchToMantleSepoliaTestnet
       }
     )
-  }
+  }, [isConnected, isCorrectNetwork, hasPrompted, isPending, switchToMantleSepoliaTestnet])
 
   // Auto-prompt when connected to wrong network
   useEffect(() => {
@@ -58,7 +58,7 @@ export function useNetworkSwitch() {
       const timer = setTimeout(promptNetworkSwitch, 1000)
       return () => clearTimeout(timer)
     }
-  }, [isConnected, isCorrectNetwork, hasPrompted])
+  }, [isConnected, isCorrectNetwork, hasPrompted, promptNetworkSwitch])
 
   // Reset prompt flag when network changes or user disconnects
   useEffect(() => {

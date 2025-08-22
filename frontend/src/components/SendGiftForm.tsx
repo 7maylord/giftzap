@@ -28,6 +28,7 @@ export default function SendGiftForm({
   const [isFavorite, setIsFavorite] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [twitterHandle, setTwitterHandle] = useState('')
   const [currentGiftDetails, setCurrentGiftDetails] = useState<{
     recipient: string
     amount: bigint
@@ -35,6 +36,7 @@ export default function SendGiftForm({
     message: string
     txHash?: string
     giftId?: string
+    twitterHandle?: string
   } | undefined>(undefined)
 
   const { writeContract: writeGiftManager } = useGiftManagerWrite()
@@ -44,7 +46,7 @@ export default function SendGiftForm({
   const { data: allowance } = useTokenAllowance(address, CONTRACTS.GIFT_MANAGER)
   const { data: charitiesData } = useGetCharities()
   const { data: favoritesData } = useGetFavorites(address)
-  const { data: giftCounter, refetch: refetchGiftCounter } = useGiftManagerRead('giftCounter')
+  const { data: _giftCounter, refetch: refetchGiftCounter } = useGiftManagerRead('giftCounter')
 
   const charities = charitiesData ? {
     ids: (charitiesData as [bigint[], string[], string[], string[]])[0],
@@ -191,7 +193,8 @@ export default function SendGiftForm({
         giftType,
         message,
         txHash: 'success', // Always provide a truthy value to trigger success state
-        giftId: nextGiftId.toString()
+        giftId: nextGiftId.toString(),
+        twitterHandle: twitterHandle || undefined
       }
       
       // Update success state and show modal only after transaction completes
@@ -455,6 +458,19 @@ export default function SendGiftForm({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0.00"
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Recipient&apos;s Twitter Handle (optional)
+          </label>
+          <input
+            type="text"
+            value={twitterHandle}
+            onChange={(e) => setTwitterHandle(e.target.value.replace('@', ''))}
+            placeholder="username (without @)"
             className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 bg-white hover:border-primary/50"
           />
         </div>

@@ -176,8 +176,8 @@ export default function AdminPage() {
     return (
       <div className="container mx-auto py-8">
         <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Please connect your wallet to access the admin panel</p>
+          <h1 className="text-2xl text-black font-bold mb-2">Admin Dashboard</h1>
+          <p className="text-black">Please connect your wallet to access the admin panel</p>
         </div>
       </div>
     )
@@ -188,11 +188,7 @@ export default function AdminPage() {
       <div className="container mx-auto py-8">
         <div className="bg-white rounded-lg shadow p-6">
           <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-          <p className="text-gray-600 mb-4">Only the contract owner can access this admin panel</p>
-          <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-            <p>Your address: {address}</p>
-            <p>Contract owner: {typeof contractOwner === 'string' ? contractOwner : 'Loading...'}</p>
-          </div>
+          <p className="text-black mb-4">Only the contract owner can access this admin panel</p>
         </div>
       </div>
     )

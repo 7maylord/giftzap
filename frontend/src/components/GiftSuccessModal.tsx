@@ -11,6 +11,7 @@ interface GiftDetails {
   message: string
   txHash?: string
   giftId?: string
+  twitterHandle?: string
 }
 
 interface GiftSuccessModalProps {
@@ -60,12 +61,12 @@ export default function GiftSuccessModal({ isOpen, onClose, giftDetails }: GiftS
     ? `${window.location.origin}/redeem/${giftDetails.giftId}`
     : ''
 
-  const shareMessage = `🎁 I've sent you a gift on GiftZap! 
+  const shareMessage = `🎁 I've sent ${giftDetails.twitterHandle ? `@${giftDetails.twitterHandle}` : 'you'} a gift on GiftZap! 
 Amount: ${formatEther(giftDetails.amount)} MNT
 Type: ${giftDetails.giftType}
 Message: ${giftDetails.message || ''}
 
-Claim your gift here: ${claimLink}`
+Claim your gift here: ${claimLink} #GiftZap #Mantle #Onchain #Gift`
 
   const shareToTwitter = () => {
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMessage)}`, '_blank')

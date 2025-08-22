@@ -26,8 +26,8 @@ export default function RedeemPage({ params }: { params: Promise<{ giftId: strin
   const [giftMetadata, setGiftMetadata] = useState<GiftMetadata | null>(null)
   const [loading, setLoading] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
-  
-  const { user, authenticated } = usePrivy()
+
+  const { user, login, authenticated } = usePrivy()
   const { data: rawGift, isLoading, error } = useGetGift(giftId)
   const { writeContract } = useGiftManagerWrite()
 
@@ -201,7 +201,9 @@ export default function RedeemPage({ params }: { params: Promise<{ giftId: strin
               {!authenticated ? (
                 <div>
                   <p className="text-black mb-4">Connect your wallet to redeem this gift</p>
-                  <button className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
+                  <button 
+                  onClick={login}
+                  className="bg-primary text-primary-foreground px-8 py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
                     Connect Wallet
                   </button>
                 </div>

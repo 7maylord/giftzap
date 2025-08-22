@@ -1,12 +1,12 @@
 'use client'
 
 import { useAccount, useChainId } from 'wagmi'
-import { mantleSepoliaTestnet } from 'wagmi/chains'
+import { mantleSepoliaTestnet as _mantleSepoliaTestnet } from 'wagmi/chains'
 import { useNetworkSwitch } from '@/hooks/useNetworkSwitch'
 
 export default function NetworkIndicator() {
   const { isConnected } = useAccount()
-  const chainId = useChainId()
+  const _chainId = useChainId()
   const { isCorrectNetwork, switchToMantleSepoliaTestnet, isPending } = useNetworkSwitch()
 
   if (!isConnected) return null
