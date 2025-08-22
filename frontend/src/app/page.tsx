@@ -7,6 +7,7 @@ import SendGiftForm from '@/components/SendGiftForm'
 import GiftHistory from '@/components/GiftHistory'
 import TopGifters from '@/components/TopGifters'
 import CharityList from '@/components/CharityList'
+import FavoritesTable from '@/components/FavoritesTable'
 import NetworkIndicator from '@/components/NetworkIndicator'
 import { useNetworkSwitch } from '@/hooks/useNetworkSwitch'
 import AnimatedBackground from '@/components/AnimatedBackground'
@@ -23,8 +24,15 @@ const AuthenticatedContent = ({
   isCorrectNetwork: boolean,
   activeTab: string,
   setActiveTab: (tab: string) => void
-}) => (
-  <>
+}) => {
+  const [prefilledRecipient, setPrefilledRecipient] = useState<{address: string, name: string} | null>(null)
+  
+  const handleSendGiftFromFavorites = (recipient: string, name: string) => {
+    setPrefilledRecipient({ address: recipient, name })
+    setActiveTab('send')
+  }
+
+  return (<>
     <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-white/20 sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
@@ -74,6 +82,7 @@ const AuthenticatedContent = ({
             {[
               { id: 'send', label: '🎁 Send Gift', emoji: '🎁' },
               { id: 'history', label: '📜 My Gifts', emoji: '📜' },
+              { id: 'favorites', label: '⭐ Favorites', emoji: '⭐' },
               { id: 'leaderboard', label: '🏆 Leaderboard', emoji: '🏆' },
               { id: 'charities', label: '❤️ Charities', emoji: '❤️' }
             ].map((tab, index) => (
@@ -97,15 +106,17 @@ const AuthenticatedContent = ({
 
       <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-large border border-white/40 p-8 card-hover">
         <div className="animate-scaleIn">
-          {activeTab === 'send' && <SendGiftForm />}
+          {activeTab === 'send' && <SendGiftForm prefilledRecipient={prefilledRecipient} onClearPrefilled={() => setPrefilledRecipient(null)} />}
           {activeTab === 'history' && <GiftHistory />}
+          {activeTab === 'favorites' && <FavoritesTable onSendGift={handleSendGiftFromFavorites} />}
           {activeTab === 'leaderboard' && <TopGifters />}
           {activeTab === 'charities' && <CharityList />}
         </div>
       </div>
     </main>
   </>
-);
+  )
+}
 
 export default function Home() {
   const { login, logout, authenticated } = usePrivy()

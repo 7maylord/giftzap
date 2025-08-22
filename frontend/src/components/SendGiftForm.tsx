@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { parseEther, formatEther, keccak256, toHex, isAddress } from 'viem'
-import { useGiftManagerWrite, useGiftManagerRead } from '@/hooks/useGiftManager'
+import { useGiftManagerWrite, useGiftManagerRead, useGetFavorites } from '@/hooks/useGiftManager'
 import { useMockMNTWrite, useTokenBalance, useTokenAllowance } from '@/hooks/useMockMNT'
 import { useGetCharities } from '@/hooks/useGiftManager'
 import { CONTRACTS } from '@/lib/config'
@@ -12,13 +12,20 @@ import GiftSuccessModal from './GiftSuccessModal'
 import MockMNTABI from '@/abi/MockMNT.json'
 import GiftManagerABI from '@/abi/GiftManager.json'
 
-export default function SendGiftForm() {
+export default function SendGiftForm({ 
+  prefilledRecipient, 
+  onClearPrefilled 
+}: { 
+  prefilledRecipient?: {address: string, name: string} | null,
+  onClearPrefilled?: () => void 
+} = {}) {
   const { address } = useAccount()
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('')
   const [message, setMessage] = useState('')
   const [giftType, setGiftType] = useState('')
   const [isCharity, setIsCharity] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [currentGiftDetails, setCurrentGiftDetails] = useState<{
@@ -36,6 +43,7 @@ export default function SendGiftForm() {
   const { data: balance } = useTokenBalance(address)
   const { data: allowance } = useTokenAllowance(address, CONTRACTS.GIFT_MANAGER)
   const { data: charitiesData } = useGetCharities()
+  const { data: favoritesData } = useGetFavorites(address)
   const { data: giftCounter, refetch: refetchGiftCounter } = useGiftManagerRead('giftCounter')
 
   const charities = charitiesData ? {
@@ -44,6 +52,46 @@ export default function SendGiftForm() {
     names: (charitiesData as [bigint[], string[], string[], string[]])[2],
     metadataURIs: (charitiesData as [bigint[], string[], string[], string[]])[3]
   } : null
+
+  const favorites = favoritesData ? (favoritesData as [string[], string[], bigint[], bigint[]])[0]?.map((recipient: string, index: number) => {
+    let decodedName = 'Unknown'
+    const nameBytes = (favoritesData as [string[], string[], bigint[], bigint[]])[1]?.[index]
+    
+    // Decode bytes32 name to string
+    if (nameBytes && typeof nameBytes === 'string') {
+      try {
+        if (nameBytes.startsWith('0x')) {
+          const nameHex = nameBytes.slice(2)
+          if (nameHex && nameHex !== '0'.repeat(64)) {
+            const bytes = new Uint8Array(nameHex.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || [])
+            decodedName = new TextDecoder().decode(bytes).replace(/\0/g, '').trim()
+          }
+        }
+      } catch (error) {
+        console.error('Error decoding favorite name:', error)
+      }
+    }
+    
+    return {
+      recipient,
+      name: decodedName || 'Unknown',
+      giftCount: Number((favoritesData as [string[], string[], bigint[], bigint[]])[2]?.[index] || 0),
+      totalAmount: (favoritesData as [string[], string[], bigint[], bigint[]])[3]?.[index] || BigInt(0)
+    }
+  }) || [] : []
+
+  // Handle prefilled recipient from favorites
+  useEffect(() => {
+    if (prefilledRecipient) {
+      setRecipient(prefilledRecipient.address)
+      setIsFavorite(true)
+      setIsCharity(false)
+      // Optionally prefill message with the name
+      setMessage(`Hi ${prefilledRecipient.name !== 'Unknown' ? prefilledRecipient.name : 'there'}! 🎁`)
+      // Clear the prefilled data
+      onClearPrefilled?.()
+    }
+  }, [prefilledRecipient, onClearPrefilled])
 
 
   const handleSendGift = async () => {
@@ -75,6 +123,11 @@ export default function SendGiftForm() {
     
     if (isCharity && !charities?.addresses.includes(recipient)) {
       toast.error('Please select a valid charity')
+      return
+    }
+
+    if (isFavorite && !favorites.some(fav => fav.recipient === recipient)) {
+      toast.error('Please select a valid favorite')
       return
     }
     
@@ -153,6 +206,7 @@ export default function SendGiftForm() {
         setMessage('')
         setGiftType('')
         setIsCharity(false)
+        setIsFavorite(false)
       }, 500)
     } catch (error: unknown) {
       console.error('Transaction failed:', error)
@@ -251,25 +305,70 @@ export default function SendGiftForm() {
       </div>
 
       <div className="space-y-6">
-        <div className="p-4 rounded-xl border border-gray-200 shadow-soft">
-          <label className="flex items-center cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={isCharity}
-              onChange={(e) => setIsCharity(e.target.checked)}
-              className="sr-only"
-            />
-            <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center transition-all duration-300 ${
-              isCharity
-                ? 'bg-accent border-accent text-white'
-                : 'border-gray-300 group-hover:border-accent'
-            }`}>
-              {isCharity && <span className="text-xs">✓</span>}
-            </div>
-            <span className="font-medium text-gray-700 group-hover:text-accent transition-colors">
-              ❤️ Send to Charity
-            </span>
-          </label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl border border-gray-200 shadow-soft">
+            <label className="flex items-center cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={isCharity}
+                onChange={(e) => {
+                  setIsCharity(e.target.checked)
+                  if (e.target.checked) {
+                    setIsFavorite(false)
+                    setRecipient('')
+                  }
+                }}
+                className="sr-only"
+              />
+              <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center transition-all duration-300 ${
+                isCharity
+                  ? 'bg-accent border-accent text-white'
+                  : 'border-gray-300 group-hover:border-accent'
+              }`}>
+                {isCharity && <span className="text-xs">✓</span>}
+              </div>
+              <span className="font-medium text-gray-700 group-hover:text-accent transition-colors">
+                ❤️ Send to Charity
+              </span>
+            </label>
+          </div>
+
+          <div className="p-4 rounded-xl border border-gray-200 shadow-soft">
+            <label className="flex items-center cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={isFavorite}
+                onChange={(e) => {
+                  setIsFavorite(e.target.checked)
+                  if (e.target.checked) {
+                    setIsCharity(false)
+                    setRecipient('')
+                  }
+                }}
+                disabled={!favorites.length}
+                className="sr-only"
+              />
+              <div className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center transition-all duration-300 ${
+                isFavorite
+                  ? 'bg-primary border-primary text-white'
+                  : favorites.length 
+                    ? 'border-gray-300 group-hover:border-primary'
+                    : 'border-gray-200 bg-gray-100'
+              }`}>
+                {isFavorite && <span className="text-xs">✓</span>}
+              </div>
+              <span className={`font-medium transition-colors ${
+                favorites.length 
+                  ? 'text-gray-700 group-hover:text-primary'
+                  : 'text-gray-400'
+              }`}>
+                ⭐ Send to Favorite
+              </span>
+              {!favorites.length && (
+                <span className="text-xs text-gray-400 ml-2">(No favorites yet)</span>
+              )}
+            </label>
+          </div>
         </div>
 
         {isCharity && charities ? (
@@ -309,6 +408,24 @@ export default function SendGiftForm() {
                   </option>
                 )
               })}
+            </select>
+          </div>
+        ) : isFavorite && favorites.length > 0 ? (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Favorite
+            </label>
+            <select
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent input-glow transition-all duration-300 hover:border-primary/50 cursor-pointer"
+            >
+              <option value="">Select a favorite</option>
+              {favorites.map((favorite, index) => (
+                <option key={index} value={favorite.recipient}>
+                  {favorite.name !== 'Unknown' ? favorite.name : 'Anonymous'} ({favorite.recipient.slice(0, 6)}...{favorite.recipient.slice(-4)}) - {favorite.giftCount} gifts
+                </option>
+              ))}
             </select>
           </div>
         ) : (
