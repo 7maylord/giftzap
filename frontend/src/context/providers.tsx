@@ -18,6 +18,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         appearance: {
           theme: 'light',
           accentColor: '#676FFF',
+          walletList: ['metamask', 'coinbase_wallet', 'wallet_connect', 'detected_wallets'],
         },
         defaultChain: mantleSepoliaTestnet,
         supportedChains: [mantleSepoliaTestnet],
@@ -26,8 +27,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
           requireUserPasswordOnCreate: true,
         },
         externalWallets: {
-          coinbaseWallet: {},
-          walletConnect: { enabled: true },
+          coinbaseWallet: {
+            connectionOptions: 'all'
+          },
         },
       }}
     >
