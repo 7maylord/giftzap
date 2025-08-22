@@ -296,7 +296,7 @@ export default function GiftHistory() {
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* QR Code Section */}
                     <div>
-                      <h4 className="text-lg font-semibold mb-4 text-center">📱 Scan to Redeem</h4>
+                      <h4 className="text-lg text-blue-600 font-semibold mb-4 text-center">📱 Scan to Redeem</h4>
                       <QRCodeGenerator
                         value={redeemUrl}
                         size={150}
@@ -312,7 +312,7 @@ export default function GiftHistory() {
                     
                     {/* Social Share Section */}
                     <div>
-                      <h4 className="text-lg font-semibold mb-4 text-center">🔗 Share Gift</h4>
+                      <h4 className="text-lg text-blue-600 font-semibold mb-4 text-center">🔗 Share Gift</h4>
                       <SocialShare
                         giftId={gift.id.toString()}
                         giftAmount={formatEther(gift.amount)}

@@ -21,7 +21,7 @@ export default function FavoritesTable({
   if (!address) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6 border border-secondary">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Your Favorites</h2>
+        <h2 className="text-2xl text-black font-bold mb-4">Your Favorites</h2>
         <p className="text-secondary-foreground">Connect your wallet to view your favorite recipients</p>
       </div>
     )
@@ -30,7 +30,7 @@ export default function FavoritesTable({
   if (isLoading) {
     return (
       <div className="bg-white rounded-2xl shadow-lg p-6 border border-secondary">
-        <h2 className="text-2xl font-bold text-foreground mb-4">Your Favorites</h2>
+        <h2 className="text-2xl font-bold text-black mb-4">Your Favorites</h2>
         <div className="animate-pulse space-y-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="h-12 bg-secondary rounded"></div>
