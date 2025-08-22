@@ -29,7 +29,7 @@ export default function SocialShare({
   const fullShareText = `${shareText}\n\nRedeem your gift here: ${redeemUrl}\n\n#GiftZap #Mantle #Onchain #Gift`
 
   const handleTwitterShare = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(fullShareText)}`
+    const twitterUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(fullShareText)}`
     window.open(twitterUrl, '_blank', 'noopener,noreferrer')
   }
 
@@ -66,8 +66,8 @@ export default function SocialShare({
   return (
     <div className={`space-y-4 ${className}`}>
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-foreground mb-2">Share this gift</h3>
-        <p className="text-secondary-foreground text-sm mb-4">
+        <h3 className="text-lg font-semibold text-black mb-2">Share this gift</h3>
+        <p className="text-black text-sm mb-4">
           Let the recipient know they have a gift waiting!
         </p>
       </div>

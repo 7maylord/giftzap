@@ -13,7 +13,7 @@ interface ConfettiAnimationProps {
 export default function ConfettiAnimation({ 
   trigger = false, 
   onComplete, 
-  size = 300,
+  size = 500,
   className = ""
 }: ConfettiAnimationProps) {
   const [animationData, setAnimationData] = useState(null)
@@ -43,28 +43,76 @@ export default function ConfettiAnimation({
     return null
   }
 
+  const positions = [
+    // Randomly scattered positions across the screen
+    { x: '3%', y: '12%', scale: 0.7 },
+    { x: '17%', y: '8%', scale: 0.9 },
+    { x: '29%', y: '22%', scale: 0.6 },
+    { x: '41%', y: '3%', scale: 0.8 },
+    { x: '52%', y: '16%', scale: 0.7 },
+    { x: '67%', y: '11%', scale: 0.9 },
+    { x: '79%', y: '19%', scale: 0.6 },
+    { x: '91%', y: '7%', scale: 0.8 },
+    { x: '6%', y: '33%', scale: 0.7 },
+    { x: '23%', y: '41%', scale: 0.8 },
+    
+    { x: '37%', y: '28%', scale: 0.9 },
+    { x: '54%', y: '39%', scale: 0.6 },
+    { x: '71%', y: '26%', scale: 0.7 },
+    { x: '84%', y: '44%', scale: 0.8 },
+    { x: '13%', y: '52%', scale: 0.6 },
+    { x: '31%', y: '47%', scale: 0.9 },
+    { x: '48%', y: '61%', scale: 0.7 },
+    { x: '64%', y: '54%', scale: 0.8 },
+    { x: '77%', y: '63%', scale: 0.6 },
+    { x: '89%', y: '49%', scale: 0.9 },
+    
+    { x: '9%', y: '73%', scale: 0.8 },
+    { x: '26%', y: '68%', scale: 0.7 },
+    { x: '42%', y: '79%', scale: 0.6 },
+    { x: '59%', y: '74%', scale: 0.9 },
+    { x: '73%', y: '81%', scale: 0.7 },
+    { x: '86%', y: '77%', scale: 0.8 },
+    { x: '19%', y: '87%', scale: 0.6 },
+    { x: '35%', y: '92%', scale: 0.7 },
+    { x: '61%', y: '89%', scale: 0.8 },
+    { x: '81%', y: '94%', scale: 0.6 }
+  ]
+
   return (
     <div 
-      className={`fixed inset-0 pointer-events-none z-50 flex items-center justify-center animate-scaleIn ${className}`}
+      className={`fixed inset-0 pointer-events-none z-50 overflow-hidden ${className}`}
       style={{ zIndex: 9999 }}
     >
-      <div className="relative">
-        <Lottie
-          animationData={animationData}
-          loop={false}
-          autoplay={true}
-          style={{ width: size, height: size }}
-          onComplete={() => {
-            setShouldPlay(false)
-            onComplete?.()
+      {positions.map((pos, index) => (
+        <div
+          key={index}
+          className="absolute"
+          style={{
+            left: pos.x,
+            top: pos.y,
+            transform: 'translate(-50%, -50%)'
           }}
-          rendererSettings={{
-            preserveAspectRatio: 'xMidYMid slice',
-            progressiveLoad: true
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-gradient rounded-full"></div>
-      </div>
+        >
+          <Lottie
+            animationData={animationData}
+            loop={false}
+            autoplay={true}
+            style={{ 
+              width: size * pos.scale * 0.3, 
+              height: size * pos.scale * 0.3
+            }}
+            onComplete={index === 0 ? () => {
+              setShouldPlay(false)
+              onComplete?.()
+            } : undefined}
+            rendererSettings={{
+              preserveAspectRatio: 'xMidYMid meet',
+              progressiveLoad: true
+            }}
+          />
+        </div>
+      ))}
     </div>
   )
 }

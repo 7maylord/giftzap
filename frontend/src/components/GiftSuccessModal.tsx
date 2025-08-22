@@ -66,7 +66,7 @@ export default function GiftSuccessModal({ isOpen, onClose, giftDetails }: GiftS
 Claim your gift here: ${claimLink} #GiftZap #Mantle #Onchain #Gift`
 
   const shareToTwitter = () => {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareMessage)}`, '_blank')
+    window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(shareMessage)}`, '_blank')
   }
 
   const shareToWhatsApp = () => {
@@ -90,7 +90,7 @@ Claim your gift here: ${claimLink} #GiftZap #Mantle #Onchain #Gift`
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🎁</span>
-                  <h3 className="text-xl font-bold text-black">Gift Sent Successfully!</h3>
+                  <h3 className="text-xl font-bold text-black">Gift Details</h3>
                 </div>
                 <button onClick={onClose} className="text-gray-400 hover:text-black">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,7 +155,7 @@ Claim your gift here: ${claimLink} #GiftZap #Mantle #Onchain #Gift`
       <ConfettiAnimation 
         trigger={showConfetti} 
         onComplete={() => setShowConfetti(false)}
-        size={400}
+        size={500}
       />
     </div>
   )
